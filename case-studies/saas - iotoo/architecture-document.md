@@ -88,7 +88,7 @@ When designing the architecture, a strong emphasis was put on two major features
 
 To achieve these features, the architecture is based on the most up-to-date practices and methodoligies, ensuring high availability and performance.
 
-![Diagram](./diagrams/components-n-messaging-system.png)
+![Diagram](./diagrams/components-n-messaging-system-v2.png)
 
 As can be seen in the diagram, the applicatino is comprised of four separate independent, loosly coupled services, each has it's own task, and each communicates with the other services using standard protocols and well-defined APIs.
 
