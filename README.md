@@ -2,7 +2,7 @@
 
 ## Case Studies
 - [IOToo (Saas)](./case-studies/saas%20-%20iotoo/architecture-document.md)
-- [Dunderly (HR System)](./case-studies/hr%20system%20-%20dunderly/readme.md)
+- [Dunderly (HR System)](./case-studies/hr%20system%20-%20dunderly/architecture-document.md)
 
 ## To Do's
 - [ ] build-up the AKM (architecture knowledge map) for each case study
