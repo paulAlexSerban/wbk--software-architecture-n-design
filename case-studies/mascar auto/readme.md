@@ -128,3 +128,97 @@ Based on [the requirements](#requirements), the following components can be iden
 - The communication protocol from **Telementry Gateway** to **Telemetry Pipeline** and from **Telemetry Pipeline** to **Telemetry Processor** are going to be dictated by the technology used in the pipeline (e.g., Kafka, RabbitMQ, etc.)
 
 ## Services Drill Down
+
+### Telemetry Gateway
+What it does:
+- Receives telemetry data from cats using TCP protocol
+- Pushes the telemetry data to the pipeline component
+Application Type: Service
+Technology Stack:
+- Considerations:
+  - Load: must handle 7000 messages/second
+  - Performance (critical): must be low latency
+  - Team expertise: what does the team know?
+    - Programming Language: Devs are currently using Python and JavaScript
+    - Python can't be used for the gateway due to performance requirements (Python is slow)
+    - We look for a language with great performance. runs on Linux, and leverages the current skills (JavaScript and Python)
+    - Node.js is a good fit (JavaScript runtime, great performance, runs on Linux)
+  - Environment(OS, Cloud provider, etc.)
+    - OS: Use only Linux based systems
+Architecture:
+- Sevice Interface - grabs the messages and pushes to the pipeline
+Redundancy:
+- Deploy multiple instances behind a load balancer
+- Use auto-scaling to handle load spikes
+- Use health checks to monitor instance health
+
+### Telemetry Pipeline
+What it does:
+- Gets the telemetry messages from the gateway
+- Queues the telemetry for futher processing
+- Basically - a queue for streaming high volume data
+
+Questions:
+- Is there an existing queue mechanism in the company? - NO
+- Develop our own or use a third party solution?
+  - Best practice: use a third party solution unless there is a very good reason not to
+  - Solution: Apache Kafka - A Distributed Streaming Platform
+
+Comparison of Queue Systems:
+| Queue System | Pros                               | Cons                     |
+| ------------ | ---------------------------------- | ------------------------ |
+| RabbitMQ     | Easy to set up and use             | Not as scalable as Kafka |
+|              | Good for simple use cases          | Lower throughput         |
+|              | Mature and stable                  |                          |
+| Apache Kafka | High throughput, scalable, durable | Complex setup            |
+|              | Very popular in the industry       | Complex configuration    |
+|              | High availability support          |                          |
+
+### Telemetry Processor
+What it does:
+- polls the messages from the pipeline
+- processes the messages (validation, transformation, etc.)
+- stores the messages in the appropriate data store (operational or archive)
+Application Type: Service 
+- the component will communicate with the **Telemetry Pipeline** to get the messages and needs to be always on
+
+Technology Stack:
+- For:
+  - Processor - the developmnt platform of the processors
+  - Datastore - the database where the processed data will be stored
+- Processor: NodeJS (same as gateway, team expertise, performance, great Kafka support)
+- Datastore - Operational Data Store: NoSQL Database (schema-less messages, high performance for reads and writes)
+  - What we look for:
+    - Schema-less message support
+    - Quick retrival capabilities
+    - No complex queries (only by device ID and time range)
+  - Solution: NoSQL Database - MongoDB
+    - Schema-less
+    - Great performance for reads and writes
+    - Scalable
+    - Good support for time-series data
+    - Team expertise with NoSQL databases
+- Datastore - Archive Data Store: Data Lake (cheap storage for large volumes of data)
+  - What we look for:
+    - Support for large volumes of data (~225 TB)
+    - Not accessed frequently
+    - No need for fast retrival
+    - Save costs
+  - Alternatives:
+    - Cold HDD Storage
+    - Cloud Storage (AWS S3, Azure Blob Storage, Google Cloud Storage)
+  - Solution: Cloud Storage - Microsoft Azure Blob Storage
+    - Meets all requirements
+    - Virtually unlimited storage
+    - Cheap storage
+    - Good integration with other Azure services
+Architecture:
+- Staring from the classic 3-tier architecture:
+  - Service Interface - polls messages from the pipeline
+  - Business Logic - processes the messages
+  - Data Access Layer - stores the messages in the appropriate data store
+  - Data Stores - Operational Data Store (MongoDB) and Archive Data Store (Azure Blob Storage)
+Redundancy:
+- Deploy multiple instances behind a load balancer
+- Use auto-scaling to handle load spikes
+- Use health checks to monitor instance health
