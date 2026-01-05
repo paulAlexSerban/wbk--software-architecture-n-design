@@ -84,5 +84,47 @@ Summary:
 ## Executive Summary
 
 ## Components
+Based on [the requirements](#requirements), the following components can be identified in the system:
+- Cars (clients) - represent the thousands of autonomous vehicles on the road sending telemetry data to the system
+  - not part of the system, as we do not habve any control, but important to understand the data flow
+- Telemetry Gateway 
+  - responsible for receiving telemetry data from cars
+  - should be highly available and scalable to handle the load
+  - should provide some level of message durability to avoid data loss
+  - no business logic (no validation), just a pass-through component
+- Telemetry Pipeline
+  - responsibe for queueing the telemetry messages for processing
+  - receives messages and puts them in the pipeline
+  - the other components will poll messages from the pipeline for processing
+- Telemetry Processor
+  - responsible for validation of the messages and processing
+  - will poll messages from the pipeline, validate them, do the actual processing, and store them in the appropriate data store
+- Operational Data Store
+  - responsible for storing the operational telemetry data
+  - should be optimized for fast writes and reads
+  - should be able to handle the expected data volume
+- Data Warehouse
+  - responsible for storing the aggregated telemetry data for analysis
+  - should be optimized for analytical queries
+  - should be able to handle the expected data volume
+- Telemetry Viewer
+  - queries the database and displays real-time data to users
+  - should be web-based and user-friendly
+- BI and Analytics Application
+  - responsible for performing analysis on the aggregated data
+  - should provide tools for generating reports and visualizations
+  - should be able to handle complex queries on large datasets
+  - not connected to the operational data store to avoid performance impact
+  - works only on the data warehouse
+- Archive Database
+  - responsible for storing older telemetry data that is no longer needed for real-time analysis but must be retained for compliance or historical purposes
+  - should be able to handle large volumes of data at a lower cost
+  - performance is less critical compared to operational and aggregated data stores
+
+### Messaging System
+- The messaging system is a critical component of the architecture, responsible for decoupling the telemetry
+- The **Cars** send telemetry data to the **Telemetry Gateway**, via TCP protocol
+- The **Operational Data Store** archives data in the **Archive Database**, via ETL (Extract, Transform, Load) processes
+- The communication protocol from **Telementry Gateway** to **Telemetry Pipeline** and from **Telemetry Pipeline** to **Telemetry Processor** are going to be dictated by the technology used in the pipeline (e.g., Kafka, RabbitMQ, etc.)
 
 ## Services Drill Down
