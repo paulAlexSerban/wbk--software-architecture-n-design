@@ -39,8 +39,8 @@ In addition to real-time monitoring, IOToo allows users to set up alerts for spe
   - Probably there are a lot of messages - How many devices are we talking about?
   - Affects the load - How many concurrent messages should we expect?
   - Affects the data volume - Hoe many messages should be stored in the database?
-- What we ask?
 
+- What we ask?
   - How many concurrent messages should we expect in peak times? ~ 500
   - What is the total number of expected messages per month? ~ 15 million
   - What is the average size of a message? ~ 300 bytes
@@ -48,20 +48,17 @@ In addition to real-time monitoring, IOToo allows users to set up alerts for spe
   - What is the expected response time for real-time data on the dashboard? ~ 2 seconds
 
 - Calculations
-
   - Data volume per month: 15 million messages \* 300 bytes = 4500 Mb
   - Data volume for 1 years: ~ 4500 Mb \* 12 = 54 Gb / year
   - Data volume for 2 years: ~ 54 Gb \* 2 = 108 Gb
   - Peak load: 500 messages / second \* 300 bytes = 15000000 bytes/second = ~15 Mb/second
 
 - Message Loss
-
   - The system should be designed to handle message loss gracefully, ensuring that critical data is not lost during peak times or network issues.
   - Messages can be lost as long as the system is up to receive new messages and process them in real-time.
   - The system is tolerant to message loss, but it should implement mechanisms to minimize data loss during peak loads or network disruptions.
 
 - Users
-
   - How many users will the system have? ~ 2 million users
   - How many concurrent users should we expect? ~ 40 concurrent users
   - How many concurrent requests should we expect on the dashboard? ~ 540 requests/second
@@ -322,8 +319,8 @@ API Architecture:
 
 - API Design:
 
-| Endpoint                  | Method | Description                             | Parameters      | Return Code   |
-| ------------------------- | ------ | --------------------------------------- | --------------- | ------------- |
+| Endpoint                 | Method | Description                             | Parameters      | Return Code   |
+| ------------------------ | ------ | --------------------------------------- | --------------- | ------------- |
 | /api/device/`{deviceId}` | GET    | Get current status of a specific device | deviceId (path) | 200, 404, 500 |
 ```json
 {
