@@ -222,3 +222,63 @@ Redundancy:
 - Deploy multiple instances behind a load balancer
 - Use auto-scaling to handle load spikes
 - Use health checks to monitor instance health
+
+### Telemetry Viewer
+What it does:
+- Allows end users to query telemetry data
+- Displays real time data
+What it does not do:
+- Analyze data
+- Store data
+
+Application Type: Web Application (web server, web api, frontend)
+Technology Stack:
+  - Backend: NodeJS (team expertise, performance, great MongoDB support)
+  - Frontend: React (team expertise, great for building user interfaces)
+Architecture:
+- 3-tier architecture:
+  - Service Interface - handles user requests
+  - Business Logic - processes user requests
+  - Data Access Layer - queries the operational data store
+  - Data Store - Operational Data Store (MongoDB)
+
+API:
+- get latest errors for all cars
+- get latest telemetry for specific cat
+- get latest errors for specific car
+
+API Design:
+| Functionality                         | Path/Endpoint                    | Method | Description                    | Parameters   | Return Codes |
+| ------------------------------------- | -------------------------------- | ------ | ------------------------------ | ------------ | ------------ |
+| Get Latest Errors for All Cars        | /api/v1/telemetry/errors         | GET    | Get latest errors for all cars | None         | 200, 500     |
+| Get Latest Telemetry for specific car | /api/v1/telemetry/{carId}        | GET    | Get latest telemetry for a car | carId (path) | 200, 404,500 |
+| Get Latest Errors for specific car    | /api/v1/telemetry/errors/{carId} | GET    | Get latest errors for a car    | carId (path) | 200, 404,500 |
+
+Redundancy:
+- Deploy multiple instances behind a load balancer
+- Use auto-scaling to handle load spikes
+- Use health checks to monitor instance health
+
+### BI Application & Data Warehouse
+What it does:
+- Analyzes telemetry data
+- Displays reports about the datam trends, forecasts, etc.
+  - Eg. How many cars did break during the last month?
+  - Eg. What is the total distance driven by all cars during the last year?
+
+What it does not do:
+- Display real time data
+- Store operational data
+
+Application Type: Does not matter, because the BI Application is always based on third party tools (Power BI, Tableau, etc.)
+  - BI Applications are always based on existing tools, we do not build our own BI Application from scratch
+  - How to choose the BI tool?
+    - Market research (Gartner, Forrester, etc.)
+    - Team expertise
+    - Cost
+    - Features
+    - Integration with Data Warehouse
+  - An important lesson:
+    - Designing the BI solution is NOT part of the architect's job
+    - Always use BI experts for this task
+    - The specifics of the BI solution must be designed together with the BI team
