@@ -311,13 +311,13 @@ Follow REST conventions or your chosen API style (GraphQL, gRPC, etc.)
 
 **Endpoints:**
 
-| Functionality | HTTP Method | Endpoint | Request Body | Return Codes | Description |
-|---------------|-------------|----------|--------------|--------------|-------------|
-| [Action 1] | GET | `/api/v1/[resource]/{id}` | N/A | 200, 404 | [Description] |
-| [Action 2] | GET | `/api/v1/[resource]?param=...` | N/A | 200, 400 | [Description] |
-| [Action 3] | POST | `/api/v1/[resource]` | `{[schema]}` | 201, 400 | [Description] |
-| [Action 4] | PUT | `/api/v1/[resource]/{id}` | `{[schema]}` | 200, 400, 404 | [Description] |
-| [Action 5] | DELETE | `/api/v1/[resource]/{id}` | N/A | 200, 404 | [Description] |
+| Functionality | HTTP Method | Endpoint                       | Request Body | Return Codes  | Description   |
+| ------------- | ----------- | ------------------------------ | ------------ | ------------- | ------------- |
+| [Action 1]    | GET         | `/api/v1/[resource]/{id}`      | N/A          | 200, 404      | [Description] |
+| [Action 2]    | GET         | `/api/v1/[resource]?param=...` | N/A          | 200, 400      | [Description] |
+| [Action 3]    | POST        | `/api/v1/[resource]`           | `{[schema]}` | 201, 400      | [Description] |
+| [Action 4]    | PUT         | `/api/v1/[resource]/{id}`      | `{[schema]}` | 200, 400, 404 | [Description] |
+| [Action 5]    | DELETE      | `/api/v1/[resource]/{id}`      | N/A          | 200, 404      | [Description] |
 
 **API Usage Examples:**
 ```
@@ -385,11 +385,11 @@ Use comparison tables to show alternatives considered.
 
 **Technology Evaluation:**
 
-| Alternative | Description | Pros | Cons | Decision |
-|-------------|-------------|------|------|----------|
-| **[Option 1]** | [Brief description] | - [Pro 1]<br>- [Pro 2]<br>- [Pro 3] | - [Con 1]<br>- [Con 2] | ✅ **Selected** / ❌ Not suitable |
-| **[Option 2]** | [Brief description] | - [Pro 1]<br>- [Pro 2] | - [Con 1]<br>- [Con 2]<br>- [Con 3] | ✅ **Selected** / ❌ Not suitable |
-| **[Option 3]** | [Brief description] | - [Pro 1]<br>- [Pro 2] | - [Con 1]<br>- [Con 2] | ✅ **Selected** / ❌ Not suitable |
+| Alternative    | Description         | Pros                                | Cons                                | Decision                        |
+| -------------- | ------------------- | ----------------------------------- | ----------------------------------- | ------------------------------- |
+| **[Option 1]** | [Brief description] | - [Pro 1]<br>- [Pro 2]<br>- [Pro 3] | - [Con 1]<br>- [Con 2]              | ✅ **Selected** / ❌ Not suitable |
+| **[Option 2]** | [Brief description] | - [Pro 1]<br>- [Pro 2]              | - [Con 1]<br>- [Con 2]<br>- [Con 3] | ✅ **Selected** / ❌ Not suitable |
+| **[Option 3]** | [Brief description] | - [Pro 1]<br>- [Pro 2]              | - [Con 1]<br>- [Con 2]              | ✅ **Selected** / ❌ Not suitable |
 
 **Selected Solution: [Technology Name]**
 
@@ -1009,11 +1009,11 @@ INSTRUCTIONS: Provide cost estimates for infrastructure and operations.
 INSTRUCTIONS: Identify potential risks and mitigation strategies.
 -->
 
-| Risk | Likelihood | Impact | Mitigation Strategy | Owner |
-|------|-----------|--------|-------------------|-------|
-| [Risk 1] | High/Medium/Low | High/Medium/Low | [How to mitigate] | [Who is responsible] |
-| [Risk 2] | High/Medium/Low | High/Medium/Low | [How to mitigate] | [Who is responsible] |
-| [Risk 3] | High/Medium/Low | High/Medium/Low | [How to mitigate] | [Who is responsible] |
+| Risk     | Likelihood      | Impact          | Mitigation Strategy | Owner                |
+| -------- | --------------- | --------------- | ------------------- | -------------------- |
+| [Risk 1] | High/Medium/Low | High/Medium/Low | [How to mitigate]   | [Who is responsible] |
+| [Risk 2] | High/Medium/Low | High/Medium/Low | [How to mitigate]   | [Who is responsible] |
+| [Risk 3] | High/Medium/Low | High/Medium/Low | [How to mitigate]   | [Who is responsible] |
 
 ## Future Enhancements
 
@@ -1058,8 +1058,8 @@ Strategic Initiatives:
 
 ### Appendix A: Glossary
 
-| Term | Definition |
-|------|------------|
+| Term     | Definition   |
+| -------- | ------------ |
 | [Term 1] | [Definition] |
 | [Term 2] | [Definition] |
 | [Term 3] | [Definition] |
@@ -1072,10 +1072,10 @@ Strategic Initiatives:
 
 ### Appendix C: Decision Log
 
-| Date | Decision | Rationale | Decision Maker |
-|------|----------|-----------|----------------|
-| [Date] | [What was decided] | [Why] | [Who] |
-| [Date] | [What was decided] | [Why] | [Who] |
+| Date   | Decision           | Rationale | Decision Maker |
+| ------ | ------------------ | --------- | -------------- |
+| [Date] | [What was decided] | [Why]     | [Who]          |
+| [Date] | [What was decided] | [Why]     | [Who]          |
 
 ### Appendix D: Team and Contacts
 
@@ -1101,10 +1101,10 @@ Strategic Initiatives:
 
 **Version History:**
 
-| Version | Date | Author | Changes |
-|---------|------|--------|---------|
-| 0.1 | [Date] | [Name] | Initial draft |
-| 1.0 | [Date] | [Name] | First release |
+| Version | Date   | Author | Changes       |
+| ------- | ------ | ------ | ------------- |
+| 0.1     | [Date] | [Name] | Initial draft |
+| 1.0     | [Date] | [Name] | First release |
 
 **Review Schedule:**
 - This document should be reviewed: [e.g., "Quarterly / After major changes"]
@@ -1112,12 +1112,12 @@ Strategic Initiatives:
 
 **Approval:**
 
-| Role | Name | Signature | Date |
-|------|------|-----------|------|
-| Architect | [Name] | | |
-| Tech Lead | [Name] | | |
-| Product Owner | [Name] | | |
-| CTO/VP Engineering | [Name] | | |
+| Role               | Name   | Signature | Date |
+| ------------------ | ------ | --------- | ---- |
+| Architect          | [Name] |           |      |
+| Tech Lead          | [Name] |           |      |
+| Product Owner      | [Name] |           |      |
+| CTO/VP Engineering | [Name] |           |      |
 
 ---
 
