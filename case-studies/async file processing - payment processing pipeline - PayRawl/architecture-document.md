@@ -1,8 +1,6 @@
 # PayRawl - Payment Processing System
 > FROM: "Software Architecture Case Studies" on Udemy
 
-
-
 ## Overview
 The PayRawl system is a payment processing system that handles payment files from various sources, validates and processes them, and sends instruction files to banks for payment execution. The system operates fully automatically without any user interface.
 
