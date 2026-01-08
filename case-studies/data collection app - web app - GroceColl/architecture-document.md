@@ -254,14 +254,14 @@ Based on [the requirements](#requirements), the following components have been i
 
 **Why Lists Receiver and Lists Service are Separate:**
 
-| Aspect | Lists Receiver | Lists Service |
-|--------|---------------|---------------|
-| **Primary Function** | Message consumption | Business logic & API |
-| **Scaling Driver** | Message queue throughput | Employee concurrency |
-| **Deployment Pattern** | Consumer group (3-5 instances) | Load balanced (5-10 instances) |
-| **Failure Impact** | Lists delayed in queue | Employees cannot work |
-| **Technology Focus** | Queue client libraries | REST API frameworks |
-| **Change Frequency** | Rarely changes (stable queue contract) | Frequent (business rule updates) |
+| Aspect                 | Lists Receiver                         | Lists Service                    |
+| ---------------------- | -------------------------------------- | -------------------------------- |
+| **Primary Function**   | Message consumption                    | Business logic & API             |
+| **Scaling Driver**     | Message queue throughput               | Employee concurrency             |
+| **Deployment Pattern** | Consumer group (3-5 instances)         | Load balanced (5-10 instances)   |
+| **Failure Impact**     | Lists delayed in queue                 | Employees cannot work            |
+| **Technology Focus**   | Queue client libraries                 | REST API frameworks              |
+| **Change Frequency**   | Rarely changes (stable queue contract) | Frequent (business rule updates) |
 
 This separation allows:
 - **Independent Scaling**: Scale receiver for message load, service for user load
@@ -271,13 +271,13 @@ This separation allows:
 
 ### Technology Decision Summary
 
-| Component | Technology | Rationale |
-|-----------|-----------|----------|
-| Lists Receiver | Java | Team expertise, excellent queue client libraries |
-| Lists Service | Java (Spring Boot) | Team expertise, mature REST framework, built-in load balancing support |
-| Lists Database | MySQL | Team expertise, proven partitioning capabilities, strong replication |
-| Tablet Application | React Native (Web) | Cross-platform, no installation, offline storage APIs (IndexedDB) |
-| Message Queues | Existing company infrastructure | Avoid operational complexity, leverage proven platform |
+| Component          | Technology                      | Rationale                                                              |
+| ------------------ | ------------------------------- | ---------------------------------------------------------------------- |
+| Lists Receiver     | Java                            | Team expertise, excellent queue client libraries                       |
+| Lists Service      | Java (Spring Boot)              | Team expertise, mature REST framework, built-in load balancing support |
+| Lists Database     | MySQL                           | Team expertise, proven partitioning capabilities, strong replication   |
+| Tablet Application | React Native (Web)              | Cross-platform, no installation, offline storage APIs (IndexedDB)      |
+| Message Queues     | Existing company infrastructure | Avoid operational complexity, leverage proven platform                 |
 
 ## Services Drill Down
 
@@ -435,12 +435,12 @@ public class ListsReceiverService {
 
 **API Design**:
 
-| Functionality | Method | Endpoint | Request | Response | Status Codes |
-|---------------|--------|----------|---------|----------|--------------|
-| **Get next list to collect** | GET | `/api/v1/lists/next` | Query params: `location`, `employeeId` | `ShoppingList` (JSON) | 200 OK, 204 No Content (no lists available), 400 Bad Request, 500 Internal Server Error |
-| **Mark item status** | PUT | `/api/v1/lists/{listId}/items/{itemId}` | Body: `{ "status": "collected" \| "unavailable" }` | `Item` (updated) | 200 OK, 404 Not Found, 400 Bad Request, 500 Internal Server Error |
-| **Complete list** | POST | `/api/v1/lists/{listId}/complete` | Body: `{ "employeeId": "..." }` | `ShoppingList` (updated) | 200 OK, 400 Bad Request, 500 Internal Server Error |
-| **Sync offline updates** | POST | `/api/v1/lists/{listId}/sync` | Body: Array of item updates with timestamps | `SyncResult` (conflicts, applied updates) | 200 OK, 409 Conflict, 500 Internal Server Error |
+| Functionality                | Method | Endpoint                                | Request                                            | Response                                  | Status Codes                                                                            |
+| ---------------------------- | ------ | --------------------------------------- | -------------------------------------------------- | ----------------------------------------- | --------------------------------------------------------------------------------------- |
+| **Get next list to collect** | GET    | `/api/v1/lists/next`                    | Query params: `location`, `employeeId`             | `ShoppingList` (JSON)                     | 200 OK, 204 No Content (no lists available), 400 Bad Request, 500 Internal Server Error |
+| **Mark item status**         | PUT    | `/api/v1/lists/{listId}/items/{itemId}` | Body: `{ "status": "collected" \| "unavailable" }` | `Item` (updated)                          | 200 OK, 404 Not Found, 400 Bad Request, 500 Internal Server Error                       |
+| **Complete list**            | POST   | `/api/v1/lists/{listId}/complete`       | Body: `{ "employeeId": "..." }`                    | `ShoppingList` (updated)                  | 200 OK, 400 Bad Request, 500 Internal Server Error                                      |
+| **Sync offline updates**     | POST   | `/api/v1/lists/{listId}/sync`           | Body: Array of item updates with timestamps        | `SyncResult` (conflicts, applied updates) | 200 OK, 409 Conflict, 500 Internal Server Error                                         |
 
 **Request/Response Examples**:
 
@@ -853,14 +853,14 @@ window.addEventListener('online', () => {
 
 **Decision: Desktop vs. Web Application**
 
-| Desktop/Native Application | Web-Based Application (Chosen) |
-|---------------------------|--------------------------------|
-| **PRO**: Full OS functionality access | **CON**: Limited OS functionality (sufficient for our needs) |
-| **PRO**: Utilize local apps (e.g., SQLite DB) | **CON**: Cannot use native apps (not required) |
-| **CON**: Complex setup and installation | **PRO**: No installation required (just open browser) |
-| **CON**: Platform-specific (Windows, macOS, Android) | **PRO**: Cross-platform compatible (any tablet with browser) |
-| **CON**: Higher hardware requirements | **PRO**: Lower hardware costs (no need for high-end tablets) |
-| **CON**: Requires IT department for deployment | **PRO**: Simple deployment (host on CDN, employees access via URL) |
+| Desktop/Native Application                           | Web-Based Application (Chosen)                                     |
+| ---------------------------------------------------- | ------------------------------------------------------------------ |
+| **PRO**: Full OS functionality access                | **CON**: Limited OS functionality (sufficient for our needs)       |
+| **PRO**: Utilize local apps (e.g., SQLite DB)        | **CON**: Cannot use native apps (not required)                     |
+| **CON**: Complex setup and installation              | **PRO**: No installation required (just open browser)              |
+| **CON**: Platform-specific (Windows, macOS, Android) | **PRO**: Cross-platform compatible (any tablet with browser)       |
+| **CON**: Higher hardware requirements                | **PRO**: Lower hardware costs (no need for high-end tablets)       |
+| **CON**: Requires IT department for deployment       | **PRO**: Simple deployment (host on CDN, employees access via URL) |
 
 **Final Decision**: Web-based application using React Native Web
 - **Key Benefits**: No installation, cross-platform, lower costs, easier deployment
@@ -951,14 +951,14 @@ window.addEventListener('online', () => {
 
 ### Technology Stack Summary
 
-| Component | Technology | Version | Rationale |
-|-----------|-----------|---------|----------|
-| **Lists Receiver** | Java | 11+ | Team expertise, excellent queue client libraries, mature ecosystem |
-| **Lists Service** | Java (Spring Boot) | 2.7+ | Team expertise, comprehensive REST framework, built-in features |
-| **Lists Database** | MySQL | 8.0+ | Team expertise, proven partitioning, strong replication, ACID compliance |
-| **Tablet Application** | React Native Web | 0.18+ | Cross-platform, offline APIs (IndexedDB), no installation required |
-| **Message Queue** | Company Infrastructure | N/A | Existing platform (assumed Kafka/RabbitMQ), avoid operational complexity |
-| **Load Balancer** | Company Infrastructure | N/A | Leverage existing infrastructure (AWS ALB, Nginx, etc.) |
+| Component              | Technology             | Version | Rationale                                                                |
+| ---------------------- | ---------------------- | ------- | ------------------------------------------------------------------------ |
+| **Lists Receiver**     | Java                   | 11+     | Team expertise, excellent queue client libraries, mature ecosystem       |
+| **Lists Service**      | Java (Spring Boot)     | 2.7+    | Team expertise, comprehensive REST framework, built-in features          |
+| **Lists Database**     | MySQL                  | 8.0+    | Team expertise, proven partitioning, strong replication, ACID compliance |
+| **Tablet Application** | React Native Web       | 0.18+   | Cross-platform, offline APIs (IndexedDB), no installation required       |
+| **Message Queue**      | Company Infrastructure | N/A     | Existing platform (assumed Kafka/RabbitMQ), avoid operational complexity |
+| **Load Balancer**      | Company Infrastructure | N/A     | Leverage existing infrastructure (AWS ALB, Nginx, etc.)                  |
 
 ### Key Technology Choices & Trade-offs
 
@@ -1574,28 +1574,28 @@ ALTER TABLE shopping_lists DROP PARTITION p202201;
 
 **Application Metrics**:
 
-| Metric | Threshold | Alert Level | Action |
-|--------|-----------|-------------|--------|
-| Lists Service API Latency | > 500ms (p95) | Warning | Investigate slow queries, check database load |
-| Lists Service API Latency | > 1000ms (p95) | Critical | Scale up instances, alert on-call engineer |
-| Lists Receiver Consumer Lag | > 1000 messages | Warning | Scale up consumer instances |
-| Lists Receiver Consumer Lag | > 5000 messages | Critical | Immediate scaling, investigate throughput issue |
-| Lists Service Error Rate | > 1% (5xx errors) | Warning | Check logs, investigate root cause |
-| Lists Service Error Rate | > 5% (5xx errors) | Critical | Rollback recent deployment, alert on-call |
-| Database Connection Pool | > 80% utilization | Warning | Scale up service instances, optimize queries |
-| Database Replication Lag | > 5 seconds | Warning | Investigate master load, check network |
-| Database Replication Lag | > 30 seconds | Critical | Reduce master load, consider read-replica promotion |
+| Metric                      | Threshold         | Alert Level | Action                                              |
+| --------------------------- | ----------------- | ----------- | --------------------------------------------------- |
+| Lists Service API Latency   | > 500ms (p95)     | Warning     | Investigate slow queries, check database load       |
+| Lists Service API Latency   | > 1000ms (p95)    | Critical    | Scale up instances, alert on-call engineer          |
+| Lists Receiver Consumer Lag | > 1000 messages   | Warning     | Scale up consumer instances                         |
+| Lists Receiver Consumer Lag | > 5000 messages   | Critical    | Immediate scaling, investigate throughput issue     |
+| Lists Service Error Rate    | > 1% (5xx errors) | Warning     | Check logs, investigate root cause                  |
+| Lists Service Error Rate    | > 5% (5xx errors) | Critical    | Rollback recent deployment, alert on-call           |
+| Database Connection Pool    | > 80% utilization | Warning     | Scale up service instances, optimize queries        |
+| Database Replication Lag    | > 5 seconds       | Warning     | Investigate master load, check network              |
+| Database Replication Lag    | > 30 seconds      | Critical    | Reduce master load, consider read-replica promotion |
 
 **Infrastructure Metrics**:
 
-| Metric | Threshold | Alert Level | Action |
-|--------|-----------|-------------|--------|
-| CPU Utilization | > 70% | Warning | Prepare to scale |
-| CPU Utilization | > 85% | Critical | Auto-scale or manual intervention |
-| Memory Utilization | > 80% | Warning | Investigate memory leaks |
-| Memory Utilization | > 95% | Critical | Restart service, investigate |
-| Disk Space | > 80% full | Warning | Clean up logs, review archiving |
-| Disk Space | > 90% full | Critical | Emergency cleanup, expand storage |
+| Metric             | Threshold  | Alert Level | Action                            |
+| ------------------ | ---------- | ----------- | --------------------------------- |
+| CPU Utilization    | > 70%      | Warning     | Prepare to scale                  |
+| CPU Utilization    | > 85%      | Critical    | Auto-scale or manual intervention |
+| Memory Utilization | > 80%      | Warning     | Investigate memory leaks          |
+| Memory Utilization | > 95%      | Critical    | Restart service, investigate      |
+| Disk Space         | > 80% full | Warning     | Clean up logs, review archiving   |
+| Disk Space         | > 90% full | Critical    | Emergency cleanup, expand storage |
 
 **Business Metrics** (Dashboards):
 - Lists processed per hour (operational visibility)
@@ -1750,11 +1750,11 @@ Response:
 
 ### Environment Strategy
 
-| Environment | Purpose | Data | Deployment Frequency |
-|-------------|---------|------|---------------------|
-| **Development** | Developer testing | Synthetic test data | Continuously (on every commit) |
-| **Staging** | Pre-production validation | Sanitized copy of production data | Daily (automated) |
-| **Production** | Live system | Real customer data | Weekly (controlled release) |
+| Environment     | Purpose                   | Data                              | Deployment Frequency           |
+| --------------- | ------------------------- | --------------------------------- | ------------------------------ |
+| **Development** | Developer testing         | Synthetic test data               | Continuously (on every commit) |
+| **Staging**     | Pre-production validation | Sanitized copy of production data | Daily (automated)              |
+| **Production**  | Live system               | Real customer data                | Weekly (controlled release)    |
 
 ## Performance & Scalability
 

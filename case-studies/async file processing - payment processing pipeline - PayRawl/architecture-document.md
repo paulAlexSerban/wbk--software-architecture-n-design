@@ -1482,7 +1482,9 @@ RECIPIENT ADDRESS
 - Open-source with strong community
 - Horizontal scaling built-in
 - Faster implementation than custom solution
-- Lower long-term maintenance burden## Technology Decisions
+- Lower long-term maintenance burden
+
+## Technology Decisions
 
 ### Message Queue Technology
 
