@@ -2,414 +2,883 @@
 > FROM: "Software Architecture Case Studies" on Udemy
 
 ## Overview
-- this business sales paper supplies such as printer paper, envelopes, and notepads, as well as office supplies like pens, staplers, and organizers.
-- the business expands and needs a new HR system to manage employee records, payroll, vacations, and benefits.
+Dunderly is a growing business that sells paper supplies (printer paper, envelopes, notepads) and office supplies (pens, staplers, organizers). As the business expands, a comprehensive HR system is required to manage employee records, payroll, vacations, and benefits efficiently.
+
+**Business Context:**
+- Company size: Currently 250 employees, expected to grow to 500 employees in 5 years
+- Current state: Manual HR processes, no centralized system
+- Goal: Implement a web-based HR management system to streamline operations
 
 ## Requirements
-### Functional Requirements (What the system should do)
-- web based
-- perform CRUD operations on employee records
-- manage salaries
-  - asllow manager to ask for employee's salary change
-  - allow HR manager to approve / reject requests
-- manage vacation days
-- use external payment system to process payroll
-- generate reports for management
 
-Functional Requirements Summary
-- Web based
-- Perform CRUD operations on employee records
-- Manage salaries
-  - allow manager to ask for employee's salary change
-  - allow HR manager to approve / reject requests
-- Manage vacation days
-- Use external payment system to process payroll
-- Generate reports for management
+### Functional Requirements (What the system should do)
+- **Web-based interface**: Accessible from any browser, no desktop installation required
+- **Employee Management**: Perform CRUD (Create, Read, Update, Delete) operations on employee records
+- **Salary Management**:
+  - Allow managers to request salary changes for their team members
+  - Allow HR managers to approve or reject salary change requests
+  - Maintain salary history and audit trail
+- **Vacation Management**:
+  - Track available vacation days per employee
+  - Allow employees to request vacation time
+  - Allow HR to set and adjust vacation day allocations
+- **Payroll Integration**: 
+  - Interface with external payment system to process monthly payroll
+  - Generate payment files in CSV format for legacy system integration
+- **Reporting**: Generate management reports for HR analytics and decision-making
 
 ### Non-Functional Requirements (What the system should deal with)
-What we know:
-- classinc information system
-- not a lot pf users
-- not a lot of data
-- there should be an interface to external system
 
-What we ask?
-- How many users will use the system concurrently?
-  - ~10 users
-- How many employees will be managed in the system?
-  - ~250 employees
-- What is the expected data growth over time?
--  - low growth rate
-- What we know about the external payment system?
-  - Legacy system, written in C++
-  - Hosted on the company's own servers
-  - Input - only via files (CSV) - no API, no DB connection
-  - Files are received once a month
+**Performance Requirements:**
+- Concurrent Users: Support ~10 simultaneous users
+- Response Time: Maximum 2 seconds for any user action
+- Employee Capacity: Manage 250 employees initially, scale to 500 employees
 
-Data Volume
-  - 1 employee record =~ 1 Mb
-  - Each employee has =~ 10 scanned documents (contracts, certificates, etc.)
-  - 1 scanned document =~ 5 Mb
-  - Total storage per 1 employee =~ 1 + 10 * 5 = 51 Mb
-  - Company expects to grow to 500 employees in the next 5 years
-  - Total storage for 500 employees =~ 500 * 51 Mb = 25500 Mb = ~25 Gb
-  - Not a lot of data, but:
-    - Need to consider document storage and backup strategy
-  .
-SLA (Service Level Agreement)
-  - How critical is the HR system for the business operations?
-    - Not critical, but important
-  - What is the acceptable downtime for the system?
-    - Max 4 hours per month
-  - What is the acceptable response time for user actions?
-    - Max 2 seconds for any action
-  - What are the backup and recovery requirements?
-    - Daily backups
-    - Recovery time objective (RTO) - max 4 hours
-    - Recovery point objective (RPO) - max 1 hour
+**Data Volume Estimation:**
+- 1 employee record: ~1 MB (structured data)
+- Average 10 scanned documents per employee
+- 1 scanned document: ~5 MB
+- Total storage per employee: ~51 MB (1 MB + 10 × 5 MB)
+- Total storage for 500 employees: ~25 GB
+- Data type: Mix of relational (employee records) and unstructured (document scans)
+- Growth rate: Low, predictable growth over 5 years
 
-Non-Functional Requirements Summary
-  - Low number of concurrent users (~10)
-  - Management of ~500 employees
-  - Low data volume (~25 Gb in 5 years)
-    - Relational & Unstructured data (documents)
-  - Not mission-critical system
-  - File-based integration with legacy payment system
+**Service Level Agreement (SLA):**
+- System Criticality: Important but not mission-critical for daily operations
+- Maximum Downtime: 4 hours per month
+- Backup Frequency: Daily backups required
+- Recovery Time Objective (RTO): Maximum 4 hours
+- Recovery Point Objective (RPO): Maximum 1 hour data loss acceptable
+
+**Integration Requirements:**
+- Legacy Payment System:
+  - Technology: C++ application hosted on company servers
+  - Integration Method: File-based (CSV), no API or database connection
+  - Frequency: Monthly batch processing
+  - One-way communication: HR system → Payment system
+
+**Infrastructure Constraints:**
+- Technology Stack: Microsoft ecosystem (.NET, SQL Server)
+- Hosting: On-premise deployment preferred
+- Existing Infrastructure: SQL Server database already in use
 
 ## Executive Summary
-- Web-based HR system for managing employee records, salaries, and vacations.
 
-![Diagram](./diagrams/components-n-messaging-system%20-%20logic%20diagram.png)
+The Dunderly HR Management System is a web-based application designed to streamline employee record management, salary administration, vacation tracking, and payroll processing. The system follows a microservices-oriented architecture with the following key characteristics:
+
+**Architecture Style:** Service-Oriented Architecture (SOA) with distinct services for each business domain
+
+**Key Components:**
+- **View Service**: Serves static web content to end users
+- **Employees Service**: Manages employee records and documents
+- **Salary Service**: Handles salary change requests and approval workflows
+- **Vacation Service**: Manages vacation day allocations and tracking
+- **Payment Interface**: Integrates with legacy payment system via CSV files
+- **Logging & Monitoring Service**: Centralized logging for all system components
+
+**Technology Stack:**
+- Backend: .NET Web API and Services
+- Database: SQL Server (relational data + BLOB storage for documents)
+- Message Queue: RabbitMQ for asynchronous communication
+- Load Balancing: For redundancy and availability
+
+**Architecture Principles:**
+- Separation of concerns: Each service handles a distinct business domain
+- Shared data store: Single SQL Server database for data consistency
+- Asynchronous communication: RabbitMQ messaging for inter-service communication
+- Redundancy: Active-Active deployment for critical services
+- Scalability: Horizontal scaling behind load balancers
+
+![System Architecture - Logic Diagram](./diagrams/components-n-messaging-system%20-%20logic%20diagram.png)
 
 ## Components
-Based on [the requirements](#requirements), the following components can be identified for the HR system:
 
-1. Employees Service
-   - performs CRUD operations on employee records
-   - manages employee documents
-2. Salary Service
-   - salary approval workflow
-   - salary management
-3. Vacation Service
-   - employee's vacation management
-4. View Service
-   - returns static files to the browser (HTML, CSS, JS)
-5. Payment System
-6. Payment Interface
-   - sends data to the payment system in the required format (CSV files)
-7. Data store
-  - Q: single or per service data store?
-  - A: data is shared between services, so a single data store is preferred
-8. Loggning & Monitoring Service
-  - collects logs from all services
+Based on [the requirements](#requirements), the following components comprise the HR system architecture:
+
+### 1. View Service
+**Purpose**: Serves the web-based user interface to end users
+**Responsibilities:**
+- Receive HTTP requests from user browsers
+- Return static files (HTML, CSS, JavaScript)
+- Act as the entry point for all user interactions
+
+### 2. Employees Service
+**Purpose**: Manages all employee-related data and operations
+**Responsibilities:**
+- CRUD operations on employee records
+- Employee document management (upload, storage, retrieval)
+- Document lifecycle management (contracts, certificates, etc.)
+- Employee status management (active/inactive)
+
+### 3. Salary Service
+**Purpose**: Handles salary change workflows and approvals
+**Responsibilities:**
+- Process salary change requests from managers
+- Implement approval workflow for HR managers
+- Maintain salary history and audit trail
+- Validate salary change requests
+
+### 4. Vacation Service
+**Purpose**: Manages employee vacation day allocations and usage
+**Responsibilities:**
+- Track available vacation days per employee
+- Process vacation day reductions
+- Allow HR to set/adjust vacation allocations
+- Maintain vacation history
+
+### 5. Payment Interface
+**Purpose**: Bridge between HR system and legacy payment system
+**Responsibilities:**
+- Monthly batch job to extract salary data
+- Generate CSV files in required format
+- Deliver files to payment system
+- Error handling and retry logic
+
+### 6. Logging & Monitoring Service
+**Purpose**: Centralized logging and monitoring for all system components
+**Responsibilities:**
+- Collect log records from all services via message queue
+- Store logs in persistent storage
+- Provide log analysis capabilities
+- Support system monitoring and alerting
+
+### 7. Message Queue System (RabbitMQ)
+**Purpose**: Enable asynchronous communication between services
+**Responsibilities:**
+- Decouple service communications
+- Ensure reliable message delivery
+- Support publish-subscribe patterns
+- Buffer messages during high load or service unavailability
+
+### 8. Data Store (SQL Server)
+**Purpose**: Centralized data persistence for all services
+**Responsibilities:**
+- Store relational data (employee records, salaries, vacations)
+- Store unstructured data (documents using BLOB storage)
+- Provide transactional consistency
+- Support backup and recovery requirements
+
+**Design Decision - Shared vs. Per-Service Data Store:**
+- **Decision**: Single shared data store
+- **Rationale**: Data is highly interconnected across services (employees, salaries, vacations), requiring transactional consistency and simplified data management
+- **Trade-off**: Reduced service autonomy, but appropriate given low scale and data consistency requirements
 
 ### Messaging System
 
-### Scalling
+**Selected Technology: RabbitMQ**
+
+**Purpose**: Enable asynchronous, reliable communication between services, particularly for logging and event-driven workflows.
+
+**Use Cases:**
+- Logging: All services publish log messages to RabbitMQ, consumed by the Logging & Monitoring Service
+- Event notifications: Services can publish events (e.g., employee created, salary approved) for other services to consume
+- Decoupling: Services can communicate without direct dependencies
+
+**Architecture Pattern:**
+- Publish-Subscribe model for logging
+- Direct exchanges for point-to-point communication
+- Durable queues for message persistence
+
+**Technology Selection Rationale:**
+
+| Technology        | Pros                                                                              | Cons                                         | Decision          |
+| ----------------- | --------------------------------------------------------------------------------- | -------------------------------------------- | ----------------- |
+| RabbitMQ          | - Easy setup and configuration<br>- Excellent documentation<br>- Multiple messaging patterns<br>- Suitable for low-medium throughput | - Not designed for high-throughput scenarios | ✅ **Selected**   |
+| Apache Kafka      | - High throughput<br>- Highly scalable<br>- Durable message storage               | - Complex setup<br>- Requires more resources<br>- Overkill for Dunderly's scale | ❌ Not suitable  |
+| Self-Developed    | - Full control                                                                    | - Reinventing the wheel<br>- Maintenance burden<br>- Lack of proven reliability | ❌ Not suitable  |
+
+**Deployment:**
+- Single RabbitMQ instance sufficient for current scale
+- Future scaling: Can add clustering if throughput increases
+
+### Scaling
+
+**Current Scale Requirements:**
+- 10 concurrent users
+- 250-500 employees
+- Low data volume (~25 GB)
+- Non-mission-critical system
+
+**Scaling Strategy:**
+
+**Horizontal Scaling:**
+- View Service: Deploy behind load balancer, add instances as needed
+- Employees Service: Deploy behind load balancer, add instances as needed
+- Salary Service: Deploy behind load balancer, add instances as needed
+- Vacation Service: Deploy behind load balancer, add instances as needed
+
+**Vertical Scaling:**
+- SQL Server: Upgrade hardware if database performance becomes bottleneck
+- RabbitMQ: Current single-instance sufficient; clustering available if needed
+
+**Bottleneck Analysis:**
+- Database likely bottleneck before application services
+- Document storage may require scaling if document volume increases significantly
+- Payment Interface runs monthly, no scaling concerns
+
+**Monitoring and Triggers:**
+- Monitor CPU, memory, and response times
+- Set alerts at 70% capacity thresholds
+- Scale proactively before user experience degrades
+
+**Future Considerations:**
+- If employee count exceeds 1000, consider database sharding by department
+- If document volume exceeds 100 GB, consider separate object storage
+- If concurrent users exceed 50, reassess load balancer capacity
 
 ## Services Drill Down
 
+This section provides detailed architecture and design specifications for each service component in the system.
+
 ### Logging & Monitoring Service
-Questions:
-- Is there an exiting logging mechanism in the company? - No
-  - The company so far designed silo systems that do not share logging mechanisms
-- Should we develpo a custom logging solution or use an existing one? - Design a custom solution
-  - Steps:
-    - Decide an Appliation Type
-    - Decide on Technology Stack
-    - Design the Architecture
-  - Application Type
-    - What it does:
-      - Read log records from queue
-      - Handle the records (store, analyze, alert)
-      - Save logs to persistent storage (database, file system, etc.)
-    - Console OR Service
-      - Console - NO GO - not suitable for production systems
-      - Service - YES - suitable for production systems
-  - Technology Stack
-    - Programming Language / Components Code
-      - What should the code do? - .NET Service - YES - already used in the company
-        - Access Queue's API to read log records
-        - Validate log records
-        - Store log records in persistent storage
-      - What us the curret technology stack in the company?
-        - Backend - Microsoft stack (.NET, SQL Server)
-    - Data Store - SQL Server - YES - already used in the company
-      - What type of data store?
-        - Relational Database - YES - suitable for structured log records
-        - NoSQL Database - NO GO - not suitable for structured log records
-  - Architecture Design
-    - Long runnig process with no UI and no API exposed to the outside world.
-    - Suggestion: Tweak the classic layered pattern
-    - Layers:
-      - Polling Layer
-        - Responsible for reading log records from the queue system.
-        - Should implement a polling mechanism to continuously check for new log records.
-      - Business Layer
-        - Responsible for processing log records.
-        - Should perform record validation and any necessary transformations.
-      - Data Access Layer
-        - Responsible for storing log records in the database.
-      - Data Store Layer
-        - Represents the SQL Server database where log records are stored.
-  - Redundancy & Scalability
-    - Redundancy
-      - Deploy 2 instances of the logging service.
-      - Use Active-Active configuration.
-      - Use Is-Alive mechanism to monitor instances and switch traffic if one instance fails to avoid duplicate log records.
-    - Scalability
-      - Use Queue system to decouple log producers from log consumers.
-      - Scale out by adding more instances of the logging service as needed.
 
-![Diagram](./diagrams/logging-service.png)
+**Purpose**: Centralized logging infrastructure for all system components
 
-#### Logging - Alternative
-- ELK Stack (Elasticsearch, Logstash, Kibana) - NO GO - it is an overkill for this case
-  - Pros:
-    - Powerful search and analytics capabilities (Elasticsearch)
-    - Import log from many sources (Logstash)
-    - Great viewer with filter capabilities (Kibana)
-    - Scalable and flexible architecture
-    - Open-source with a large community
-  - Cons:
-    - Requires setup and maintenance
-    - Quite complicated to install and setup
-    - Can be resource-intensive
-    - Suitable mainly for large, data-intensive applications
+**Architecture Decision Process:**
+
+**1. Build vs. Buy Decision:**
+- **Question**: Is there an existing logging mechanism in the company?
+  - **Answer**: No, systems are currently siloed with no shared logging
+- **Question**: Should we develop custom or use existing solution?
+  - **Answer**: Design custom solution tailored to needs (vs. over-engineered solutions like ELK Stack)
+
+**2. Application Type:**
+- **What it does**:
+  - Read log records from message queue
+  - Validate and process log records
+  - Store logs in persistent storage (SQL Server)
+  - Support log analysis and alerting
+- **Type Decision**: Service (background process)
+  - ✅ Service: Suitable for production, runs continuously, no UI
+  - ❌ Console Application: Not suitable for production systems
+
+**3. Technology Stack:**
+- **Programming Language**: .NET Service
+  - **Rationale**: Consistent with company's Microsoft stack
+  - **Capabilities**: Queue API access, validation logic, database operations
+- **Data Store**: SQL Server
+  - ✅ Relational Database: Suitable for structured log records
+  - ❌ NoSQL Database: Not necessary for structured logs
+
+**4. Architecture Design:**
+
+Based on Classic Layered Pattern, adapted for long-running background service:
+
+**Layers:**
+1. **Polling Layer**
+   - Continuously monitors RabbitMQ for new log messages
+   - Implements polling mechanism with configurable intervals
+   - Handles connection management and retry logic
+
+2. **Business Logic Layer**
+   - Validates log record format and content
+   - Performs data transformations as needed
+   - Implements filtering and categorization logic
+   - Triggers alerts for critical errors
+
+3. **Data Access Layer**
+   - Manages database connections and transactions
+   - Executes SQL operations to persist log records
+   - Handles database exceptions and retries
+
+4. **Data Store Layer**
+   - SQL Server database with optimized log schema
+   - Indexes for efficient querying by timestamp, service, severity
+   - Retention policies for log archival
+
+**5. Redundancy & Scalability:**
+
+**Redundancy:**
+- Deploy 2 instances in Active-Active configuration
+- Implement Is-Alive mechanism to prevent duplicate processing
+- Each instance monitors queue but coordinates to avoid duplicate log entries
+- Load distributed via RabbitMQ consumer acknowledgments
+
+**Scalability:**
+- Queue-based architecture decouples log producers from consumers
+- Add more service instances if queue depth increases
+- Database indexing ensures query performance as log volume grows
+
+![Logging Service Architecture](./diagrams/logging-service.png)
+
+#### Logging - Alternative Solutions
+
+**ELK Stack (Elasticsearch, Logstash, Kibana)**
+
+**Decision**: ❌ Not suitable for Dunderly
+
+| Aspect | Analysis |
+|--------|----------|
+| **Pros** | - Powerful search and analytics (Elasticsearch)<br>- Import logs from many sources (Logstash)<br>- Excellent visualization and filtering (Kibana)<br>- Scalable and flexible architecture<br>- Open-source with large community |
+| **Cons** | - Complex installation and setup<br>- Requires significant maintenance effort<br>- Resource-intensive (CPU, memory, storage)<br>- Overkill for low-volume logging (~10 users, 500 employees)<br>- Steep learning curve |
+| **Verdict** | Not suitable: Complexity and resource requirements far exceed Dunderly's needs. Custom solution provides adequate functionality with lower overhead. |
+
+**Alternative Consideration**: If logging requirements increase significantly (e.g., 1000+ employees, complex compliance requirements, advanced analytics needs), ELK Stack could be reconsidered.
 
 ### View Service
-What it does:
-- Get requests from the end user's browser
-- Return static files (HTML, CSS, JS)
-Application Type: Web App & Web API
-Technology Stack:
-- Programming Language / Components Code
-  - What should the code do? - .NET Web API - YES - already used in the company, has great support for web applications
-    - Handle HTTP requests
-    - Return static files
-  - What us the curret technology stack in the company?
-    - Backend - Microsoft stack (.NET, SQL Server)
-Architecture Design:
-- Start from classic 3-Layered Pattern, and keep only the User Interface Layer (this is a fuly static service, that only serves static files).
-- Layers:
-  - User Interface Layer
-    - Responsible for handling HTTP requests and returning static files to the browser.
-View Service Redundancy & Scalability
-- Redundancy
-  - Deploy 2 instances of the View Service behind a Load Balancer.
+
+**Purpose**: Serves static web content to end-user browsers
+
+**What it does:**
+- Receives HTTP requests from user browsers
+- Returns static files (HTML, CSS, JavaScript)
+- Acts as entry point for the web application
+
+**What it does NOT do:**
+- No business logic processing
+- No direct database access
+- No data transformation
+
+**Application Type**: Web Application
+
+**Technology Stack:**
+- **Framework**: .NET Web API / ASP.NET Core
+- **Rationale**: 
+  - Excellent support for static file serving
+  - Consistent with company's Microsoft stack
+  - Built-in HTTP request handling
+  - Lightweight for static content delivery
+
+**Architecture Design:**
+
+**Pattern**: Simplified 3-Layer Pattern (UI Layer only)
+
+Since this service serves only static files, most traditional layers are unnecessary:
+
+**Layer:**
+1. **User Interface Layer**
+   - HTTP request handling
+   - Static file routing
+   - Content type management (HTML, CSS, JS, images)
+   - Caching headers for performance
+
+**Redundancy & Scalability:**
+- Deploy 2+ instances behind a load balancer
+- Load balancer performs health checks
+- Session-less design enables easy scaling
+- CDN can be added in future for static asset caching
+
+**Performance Considerations:**
+- Enable gzip compression for text files
+- Set appropriate cache headers
+- Minify CSS and JavaScript in production
+- Serve assets with far-future expiry dates
 
 ### Employees Service
-What it does:
-- Allows end users to query employee records
-- Allows performing actions on employee records (create, update, delete / CUD)
-What it dose not do:
-- Displays the data to the end user (this is the View Service's responsibility)
-Application Type: Web API
-Technology Stack:
-- Programming Language / Components Code
-  - What should the code do? - .NET Web API - YES - already used in the company
-    - Handle HTTP requests
-    - Perform CRUD operations on employee records
-  - What us the curret technology stack in the company?
-    - Backend - Microsoft stack (.NET, SQL Server)
-- Database
-  - Data types:
-    - Relational Data - Employee records
-    - Unstructured Data - Employee documents (scanned contracts, certificates, etc.)
-      - Alternatives for Document (BLOG) Storage:
-        - Relational Database
-        - File System
-        - Object Store
-        - Cloud Storage
 
-| Alternative         | Description                                                                   | Examples                                         | Pros                                   | Cons                           | Suitable for Dunderly?                      |
-| ------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------ | -------------------------------------- | ------------------------------ | ------------------------------------------- |
-| Relational Database | Store documents in a specialized column type designed for BLOBs               | SQL Server, FILESTREAM, Oracle's BLOB type       | - Part of the app transaction          | - Clunky syntax                | YES - suitable for small data volume        |
-|                     |                                                                               |                                                  | - Part of the DB's backup / DR process | - Limited size                 |                                             |
-| File System         | Store documents as files on a file system, and hold a pointer to it in the DB | NFS, SMB, Local File System                      | - Simple to implement                  | - Backup/DR is separate        | NO GO - backup/DR complexity                |
-|                     |                                                                               |                                                  | - Easy to access files                 | - Scalability                  |                                             |
-|                     |                                                                               |                                                  |                                        | - Not part of the transaction  |                                             |
-| Object Store        | Use special type of store mechanism that specialized in BLOBs                 | MinIO, Ceph, OpenStack Swift                     | - Scalable                             | - Additional component         | NO GO - adds complexity                     |
-|                     |                                                                               |                                                  | - Designed for large files             | - Backup/DR is separate        |                                             |
-|                     |                                                                               |                                                  |                                        | - Complex setup                |                                             |
-| Cloud Storage       | Store documents one of the public cloud storage mechanisms                    | AWS S3, Azure Blob Storage, Google Cloud Storage | - Highly scalable                      | - Dependency on cloud provider | NO GO - adds complexity                     |
-|                     |                                                                               |                                                  | - Managed service                      | - Cost                         | NO GO - not suitable for on-premise systems |
-|                     |                                                                               |                                                  |                                        | - Requires internet connection |                                             |
+**Purpose**: Manages all employee-related data and operations, including employee records and document management
 
-  - Database Type:
-    - Relational Database - YES - suitable for relational data, SQL Server is already used in the company
-    - Document Store - YES - use SQL Server BLOB type for document storage, suitable for small data volume
-Architecture Design:
-- Start from classic 3-Layered Pattern
-- Layers:
-  - Service Interface Layer
-    - Responsible for handling HTTP requests and returning responses to the client.
-  - Business Layer
-    - Responsible for processing business logic related to employee management.
-  - Data Access Layer
-    - Responsible for interacting with the database to perform CRUD operations on employee records.
-  - Data Store Layer
-    - Represents the SQL Server database where employee records and documents are stored.
+**What it does:**
+- Query employee records by various criteria
+- Perform CRUD operations on employee records
+- Manage employee documents (contracts, certificates, etc.)
+- Maintain employee status (active/inactive)
 
-API:
-- What the API should do?
-  - Get full employee details by ID
-  - List of employees by parameters (name, department, etc.)
-  - Add employee
-  - Update employee details
-  - Remove employee (no physical delete, only mark as inactive)
-  - Add employee document
-  - Remove employee document (no physical delete, only mark as inactive)
-  - Get employee document by ID
-  - Retrive documents by paramters (employee ID, document type, etc.)
-> Q: Do we need a separare Document Handler Service?
-> A: No, the document handling is closely tied to employee records, so it makes sense to keep it within the Employees Service.
-> But: if we see in the future that multiple services need to access documents, we can consider extracting it into a separate service.
+**What it does NOT do:**
+- Display data to end users (View Service responsibility)
+- Process salary information (Salary Service responsibility)
+- Manage vacation days (Vacation Service responsibility)
 
-API Design:
+**Application Type**: Web API (RESTful)
+
+**Technology Stack:**
+
+**Framework**: .NET Web API
+- **Rationale**: 
+  - Consistent with company's Microsoft stack
+  - Robust HTTP request handling
+  - Built-in serialization and validation
+  - Excellent Entity Framework integration
+
+**Database Technology Decision:**
+
+The service must handle two data types:
+1. **Relational Data**: Employee records (structured)
+2. **Unstructured Data**: Employee documents (scanned PDFs, images)
+
+**Document (BLOB) Storage Alternatives:**
+
+| Alternative         | Description                                                | Examples                    | Pros                                                                      | Cons                                                                          | Decision for Dunderly           |
+| ------------------- | ---------------------------------------------------------- | --------------------------- | ------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | ------------------------------- |
+| Relational Database | Store documents in BLOB column type                        | SQL Server FILESTREAM       | - Part of app transaction<br>- Included in DB backup/DR<br>- ACID guarantees | - Clunky syntax<br>- Size limitations<br>- Can bloat database                 | ✅ **Selected** (suitable for small volume) |
+| File System         | Store files on file system, hold pointer in DB             | NFS, SMB, Local FS          | - Simple implementation<br>- Easy file access                              | - Separate backup/DR<br>- Scalability issues<br>- Not transactional            | ❌ Backup/DR complexity         |
+| Object Store        | Specialized BLOB storage mechanism                         | MinIO, Ceph, OpenStack      | - Highly scalable<br>- Designed for large files                            | - Additional component<br>- Separate backup/DR<br>- Complex setup              | ❌ Adds unnecessary complexity  |
+| Cloud Storage       | Public cloud storage services                              | AWS S3, Azure Blob, GCS     | - Highly scalable<br>- Managed service<br>- High availability              | - Cloud provider dependency<br>- Ongoing costs<br>- Internet required<br>- Not on-premise | ❌ Not suitable for on-premise |
+
+**Selected Solution**: SQL Server with BLOB storage
+- Appropriate for 25 GB data volume
+- Transactional consistency with employee records
+- Simplified backup/recovery (single system)
+- Leverages existing SQL Server infrastructure
+
+**Architecture Design:**
+
+**Pattern**: Classic 3-Layer Architecture
+
+**Layers:**
+1. **Service Interface Layer (API Layer)**
+   - Handles HTTP requests and responses
+   - Input validation and sanitization
+   - Authentication and authorization
+   - Returns appropriate HTTP status codes
+
+2. **Business Logic Layer**
+   - Employee record validation rules
+   - Business logic for employee lifecycle
+   - Document validation (file type, size limits)
+   - Soft delete implementation
+
+3. **Data Access Layer**
+   - Entity Framework for relational data
+   - BLOB API for document storage
+   - Transaction management
+   - Database connection pooling
+
+4. **Data Store Layer**
+   - SQL Server database
+   - Employee records table with indexes
+   - Document metadata table
+   - BLOB storage for document files
+
+**API Design:**
+
+**Design Principles:**
+- RESTful conventions
+- Resource-based URLs
+- Appropriate HTTP methods (GET, POST, PUT, DELETE)
+- Meaningful HTTP status codes
+- Versioned API (/api/v1/)
+
+**Should Documents be a Separate Service?**
+- **Decision**: No, keep within Employees Service
+- **Rationale**: Document lifecycle is tightly coupled to employee records
+- **Future Consideration**: Extract to separate service if other services need document storage
+
+**Endpoints:**
+
 | Functionality                | HTTP Method | Endpoint                                 | Return Codes  | Description                                      |
 | ---------------------------- | ----------- | ---------------------------------------- | ------------- | ------------------------------------------------ |
-| Get employee details by ID   | GET         | /api/v1/employee/{id}                    | 200, 404      | Retrieve full details of an employee by their ID |
-| List employees by params     | GET         | /api/v1/employee?name=...&attributes=... | 200, 400      | Retrieve a list of employees based on parameters |
-| Add employee                 | POST        | /api/v1/employee                         | 201, 400      | Create a new employee record                     |
-| Update employee details      | PUT         | /api/v1/employee/{id}                    | 200, 400, 404 | Update details of an existing employee           |
-| Remove employee              | DELETE      | /api/v1/employee/{id}                    | 200, 404      | Mark an employee as inactive                     |
-| Add employee document        | POST        | /api/v1/employee/{id}/documents          | 201, 400, 404 | Add a document to an employee record             |
-| Remove employee document     | DELETE      | /api/v1/employee/{id}/documents/{docId}  | 200, 404      | Mark a document as inactive                      |
-| Get employee document by ID  | GET         | /api/v1/employee/{id}/documents/{docId}  | 200, 404      | Retrieve a specific document by its ID           |
-| Retrieve documents by params | GET         | /api/v1/employee/{id}/documents?type=... | 200, 400      | Retrieve documents based on parameters           |
+| Get employee details by ID   | GET         | `/api/v1/employee/{id}`                  | 200, 404      | Retrieve full details of an employee by their ID |
+| List employees by params     | GET         | `/api/v1/employee?name=...&department=...` | 200, 400      | Retrieve a list of employees based on parameters |
+| Add employee                 | POST        | `/api/v1/employee`                       | 201, 400      | Create a new employee record                     |
+| Update employee details      | PUT         | `/api/v1/employee/{id}`                  | 200, 400, 404 | Update details of an existing employee           |
+| Remove employee              | DELETE      | `/api/v1/employee/{id}`                  | 200, 404      | Soft delete - mark employee as inactive          |
+| Add employee document        | POST        | `/api/v1/employee/{id}/documents`        | 201, 400, 404 | Upload a document for an employee                |
+| Remove employee document     | DELETE      | `/api/v1/employee/{id}/documents/{docId}` | 200, 404      | Soft delete - mark document as inactive          |
+| Get employee document by ID  | GET         | `/api/v1/employee/{id}/documents/{docId}` | 200, 404      | Download a specific document                     |
+| Retrieve documents by params | GET         | `/api/v1/employee/{id}/documents?type=...` | 200, 400      | List documents with filtering                    |
 
-Employees Service Redundancy & Scalability
-- Redundancy
-  - Deploy 2 instances of the Employees Service behind a Load Balancer.
+**Response Codes Explained:**
+- **200 OK**: Successful operation
+- **201 Created**: Resource successfully created
+- **400 Bad Request**: Invalid input data
+- **404 Not Found**: Resource does not exist
+
+**Redundancy & Scalability:**
+- Deploy 2+ instances behind load balancer
+- Stateless design enables horizontal scaling
+- Database connection pooling for efficiency
+- Read replicas can be added if query load increases
 
 ### Salary Service
-What it does:
-- Allows managers to ask for employee's salary change
-- Allows HR representative to approve / reject requests
-Application Type: Web API - sevice that expects requests and returns responses over HTTP
-Technology Stack:
-- Programming Language / Components Code
-  - What should the code do? - .NET Web API - YES - already used in the company
-    - Handle HTTP requests
-    - Process salary change requests
-  - What us the curret technology stack in the company?
-    - Backend - Microsoft stack (.NET, SQL Server)
 
-Architecture Design:
-- Start from classic 3-Layered Pattern
-- Layers:
-  - Service Interface Layer
-    - Responsible for handling HTTP requests and returning responses to the client.
-  - Business Layer
-    - Responsible for processing business logic related to salary management.
-  - Data Access Layer
-    - Responsible for interacting with the database to perform CRUD operations on salary records.
-  - Data Store Layer
-    - Represents the SQL Server database where salary records are stored.
+**Purpose**: Manages salary change workflow and approval process
 
-API:
-- What the API should do?
-  - Add salary request
-  - Remove salary request
-  - Get saalry request
-  - Approve salary request
-  - Reject salary request
+**What it does:**
+- Accept salary change requests from managers
+- Implement approval workflow for HR managers
+- Maintain salary change history and audit trail
+- Validate salary change requests against business rules
 
-API Design:
-| Functionality          | HTTP Method | Endpoint                                     | Return Codes | Description                               |
-| ---------------------- | ----------- | -------------------------------------------- | ------------ | ----------------------------------------- |
-| Add salary request     | POST        | /api/v1/salary/request                       | 201, 400     | Create a new salary change request        |
-| Remove salary request  | DELETE      | /api/v1/salary/request/{requestId}           | 200, 404     | Remove a salary change request            |
-| Get salary requests    | GET         | /api/v1/salary/requests                      | 200, 400     | Retrieve a list of salary change requests |
-| Approve salary request | POST        | /api/v1/salary/request/{requestId}/approval  | 200, 404     | Approve a salary change request           |
-| Reject salary request  | POST        | /api/v1/salary/request/{requestId}/rejection | 200, 404     | Reject a salary change request            |
+**What it does NOT do:**
+- Direct salary modifications (requires approval workflow)
+- Employee record management (Employees Service responsibility)
+- Payment processing (Payment Interface responsibility)
 
-> - Why "approval" and "rejection" instead of "approve" and "reject"?
->  - Because we are performing an action on the resource (salary request), so we use nouns instead of verbs in the endpoint.
->  - REST only deals with entities (resources), not actions (verbs).
+**Application Type**: Web API (RESTful)
+
+**Technology Stack:**
+- **Framework**: .NET Web API
+- **Rationale**: 
+  - Consistent with Microsoft stack
+  - Supports workflow orchestration
+  - Transaction management for approvals
+
+**Architecture Design:**
+
+**Pattern**: Classic 3-Layer Architecture
+
+**Layers:**
+1. **Service Interface Layer (API Layer)**
+   - Handles HTTP requests for salary operations
+   - Request validation and authorization
+   - Workflow state management
+   - Response formatting
+
+2. **Business Logic Layer**
+   - Salary change validation rules
+   - Approval workflow logic
+   - Business rule enforcement (e.g., max increase %, approval thresholds)
+   - Notification triggering
+
+3. **Data Access Layer**
+   - Salary request CRUD operations
+   - Approval history tracking
+   - Transaction management for state changes
+
+4. **Data Store Layer**
+   - SQL Server database
+   - Salary request table with status tracking
+   - Approval history table for audit trail
+
+**API Design:**
+
+**REST Design Note**: Why use nouns ("approval", "rejection") instead of verbs ("approve", "reject")?
+- REST deals with resources (nouns), not actions (verbs)
+- The HTTP method (POST) indicates the action
+- Endpoints represent resource state transitions
+
+**Endpoints:**
+
+| Functionality          | HTTP Method | Endpoint                                     | Return Codes  | Description                               |
+| ---------------------- | ----------- | -------------------------------------------- | ------------- | ----------------------------------------- |
+| Add salary request     | POST        | `/api/v1/salary/request`                     | 201, 400      | Create a new salary change request        |
+| Remove salary request  | DELETE      | `/api/v1/salary/request/{requestId}`         | 200, 404      | Delete a salary change request            |
+| Get salary requests    | GET         | `/api/v1/salary/requests?status=...&employeeId=...` | 200, 400      | Retrieve salary change requests with filters |
+| Get salary request by ID | GET       | `/api/v1/salary/request/{requestId}`         | 200, 404      | Retrieve specific salary request details  |
+| Approve salary request | POST        | `/api/v1/salary/request/{requestId}/approval` | 200, 400, 404 | Approve a salary change request           |
+| Reject salary request  | POST        | `/api/v1/salary/request/{requestId}/rejection` | 200, 400, 404 | Reject a salary change request            |
+
+**Request Flow:**
+1. Manager creates salary request (POST to `/salary/request`)
+2. Request enters "Pending" state
+3. HR Manager reviews request (GET `/salary/requests?status=pending`)
+4. HR Manager approves or rejects (POST to `/approval` or `/rejection`)
+5. Request state changes to "Approved" or "Rejected"
+6. Approved requests flow to Payment Interface for processing
+
+**Redundancy & Scalability:**
+- Deploy 2+ instances behind load balancer
+- Stateless API design for easy scaling
+- Database transactions ensure consistency
+- Queue notifications for approved salaries
 
 ### Vacation Service
-What it does:
-- Alows employees to manage their vacation days
-- Allws HR to set available vacation days per employee
-Application Type: Web API
-Technology Stack:
-- Programming Language / Components Code
-  - What should the code do? - .NET Web API - YES - already used in the company
-    - Handle HTTP requests
-    - Process vacation management
-  - What us the curret technology stack in the company?
-    - Backend - Microsoft stack (.NET, SQL Server)
-Architecture Design:
-- Start from classic 3-Layered Pattern
-- Layers:
-  - Service Interface Layer
-    - Responsible for handling HTTP requests and returning responses to the client.
-  - Business Layer
-    - Responsible for processing business logic related to vacation management.
-  - Data Access Layer
-    - Responsible for interacting with the database to perform CRUD operations on vacation records.
-  - Data Store Layer
-    - Represents the SQL Server database where vacation records are stored.
-  
-API:
-- What the API should do?
-  - Set availbale vacation days (by HR)
-  - Get available vacation days
-  - Reduce vacation days (by employees)
 
-API Design:
+**Purpose**: Manages employee vacation day allocations and usage
+
+**What it does:**
+- Allow employees to view and reduce their vacation days
+- Allow HR to set and adjust vacation day allocations
+- Track vacation day balances per employee
+- Maintain vacation history for audit purposes
+
+**What it does NOT do:**
+- Vacation request approval workflow (simplified model: direct reduction)
+- Calendar management or vacation scheduling
+- Team vacation coordination
+
+**Application Type**: Web API (RESTful)
+
+**Technology Stack:**
+- **Framework**: .NET Web API
+- **Rationale**: 
+  - Consistent with Microsoft stack
+  - Simple CRUD operations
+  - Transaction support for balance updates
+
+**Architecture Design:**
+
+**Pattern**: Classic 3-Layer Architecture
+
+**Layers:**
+1. **Service Interface Layer (API Layer)**
+   - Handles HTTP requests for vacation operations
+   - Input validation (ensure positive values, sufficient balance)
+   - Authorization checks (HR vs. employee permissions)
+   - Response formatting
+
+2. **Business Logic Layer**
+   - Vacation balance validation
+   - Insufficient balance checks
+   - Business rules (e.g., minimum/maximum vacation days)
+   - Calculation logic for reductions
+
+3. **Data Access Layer**
+   - Vacation balance CRUD operations
+   - Transaction management for balance updates
+   - History logging for audit trail
+
+4. **Data Store Layer**
+   - SQL Server database
+   - Vacation balance table (employee_id, available_days)
+   - Vacation history table for tracking changes
+**API Design:**
+
+**Endpoints:**
+
 | Functionality               | HTTP Method | Endpoint                                | Return Codes  | Description                                 |
 | --------------------------- | ----------- | --------------------------------------- | ------------- | ------------------------------------------- |
-| Set available vacation days | PUT         | /api/v1/vacation/{employeeId}           | 200, 400, 404 | Set available vacation days for an employee |
-| Get available vacation days | GET         | /api/v1/vacation/{employeeId}           | 200, 404      | Get available vacation days for an employee |
-| Reduce vacation days        | POST        | /api/v1/vacation/{employeeId}/reduction | 200, 400, 404 | Reduce vacation days for an employee        |
+| Set available vacation days | PUT         | `/api/v1/vacation/{employeeId}`         | 200, 400, 404 | Set/update vacation day balance (HR only)   |
+| Get available vacation days | GET         | `/api/v1/vacation/{employeeId}`         | 200, 404      | Retrieve current vacation day balance       |
+| Get vacation history        | GET         | `/api/v1/vacation/{employeeId}/history` | 200, 404      | Retrieve vacation usage history             |
+| Reduce vacation days        | POST        | `/api/v1/vacation/{employeeId}/reduction` | 200, 400, 404 | Reduce vacation days (record usage)         |
+
+**API Usage Examples:**
+- HR sets initial balance: `PUT /api/v1/vacation/123` with body `{"days": 20}`
+- Employee checks balance: `GET /api/v1/vacation/123` returns `{"employeeId": 123, "availableDays": 20}`
+- Employee takes vacation: `POST /api/v1/vacation/123/reduction` with body `{"days": 5, "reason": "Annual vacation"}`
+- Updated balance: `GET /api/v1/vacation/123` returns `{"employeeId": 123, "availableDays": 15}`
+
+**Business Rules:**
+- Cannot reduce more days than available balance (return 400 Bad Request)
+- Only HR can set/increase vacation days
+- Employees can only reduce their own vacation days
+- All reductions logged in history table
+
+**Redundancy & Scalability:**
+- Deploy 2+ instances behind load balancer
+- Stateless design for horizontal scaling
+- Database transactions prevent race conditions
+- Read-heavy workload suitable for read replicas if needed
 
 ### Payment Interface
-What it does:
-- Queries the database once a month to get the salary data
-- Passes payment data to the external payment system via CSV files
-Application Type: Service - it is a long running process with no UI and no API exposed to the outside world.
-Technology Stack:
-- Programming Language / Components Code
-  - What should the code do? - .NET Service - YES - already used in the company
-    - Query the database to get salary data
-    - Generate CSV files
-    - Send files to the external payment system
-  - What us the curret technology stack in the company?
-    - Backend - Microsoft stack (.NET, SQL Server)
-Architecture Design:
-- Start from classic layered pattern
-- Layers:
-  - Timer Layer
-    - Responsible for triggering the payment process once a month.
-  - Business Logic Layer
-    - Responsible for processing the payment logic.
-  - Data Access Layer
-    - Responsible for interacting with the database to retrieve salary data.
-  - Data Store Layer
-    - Represents the SQL Server database where salary records are stored.
 
-Redundancy & Scalability
-- Redundancy
-  - Deploy 2 instances of the Payment Interface Service.
-  - Use Active-Active configuration.
-  - Use Is-Alive mechanism to monitor instances and switch traffic if one instance fails to avoid duplicate payment files.
-- Scalability
-  - Not applicable - the service runs once a month and does not require scaling.
+**Purpose**: Bridge between HR system and legacy payment system
+
+**What it does:**
+- Run monthly batch job to extract salary data
+- Query approved salary changes from database
+- Generate CSV files in format required by payment system
+- Deliver files to payment system's designated location
+- Handle errors and implement retry logic
+- Log processing status for audit
+
+**What it does NOT do:**
+- Approve salary changes (Salary Service responsibility)
+- Modify employee records (Employees Service responsibility)
+- Real-time processing (batch-only, monthly schedule)
+
+**Application Type**: Background Service (scheduled task)
+
+**Characteristics:**
+- Long-running process
+- No user interface
+- No API exposed to external systems
+- Scheduled execution (monthly)
+
+**Technology Stack:**
+- **Framework**: .NET Windows Service / Worker Service
+- **Rationale**: 
+  - Consistent with Microsoft stack
+  - Supports scheduled task execution
+  - Reliable background processing
+  - Built-in service lifecycle management
+
+**Architecture Design:**
+
+**Pattern**: Modified Layered Architecture (for batch processing)
+
+**Layers:**
+1. **Timer/Scheduler Layer**
+   - Triggers job execution on monthly schedule (e.g., 1st day of month)
+   - Handles scheduling logic and timing
+   - Supports manual trigger for ad-hoc runs
+
+2. **Business Logic Layer**
+   - Query database for approved salary changes
+   - Aggregate salary data for payroll period
+   - Generate CSV file according to payment system specifications
+   - Validate data completeness and correctness
+   - Implement retry logic for failures
+
+3. **Data Access Layer**
+   - Query SQL Server for salary data
+   - Retrieve employee information for payroll
+   - Mark processed records to avoid duplication
+   - Log processing status
+
+4. **File Output Layer**
+   - Write CSV file to designated location
+   - Handle file system errors
+   - Implement file naming convention (e.g., `payroll_YYYY_MM.csv`)
+
+5. **Data Store Layer**
+   - SQL Server database (shared with other services)
+   - Access salary and employee tables
+
+**Integration with Legacy System:**
+- **Method**: File-based integration
+- **Format**: CSV files
+- **Location**: Shared file system or FTP location
+- **Frequency**: Once per month
+- **Direction**: One-way (HR system → Payment system)
+
+**CSV File Specification (example):**
+```
+EmployeeId,FirstName,LastName,Salary,EffectiveDate
+001,John,Doe,75000.00,2026-02-01
+002,Jane,Smith,82000.00,2026-02-01
+```
+
+**Redundancy & Scalability:**
+
+**Redundancy:**
+- Deploy 2 instances with Active-Active configuration
+- Implement "Is-Alive" mechanism and distributed locking
+- Only one instance processes at a time to avoid duplicate files
+- If active instance fails, standby instance takes over
+
+**Scalability:**
+- Not applicable: Monthly batch, low processing requirements
+- Current design sufficient for 500+ employees
+- Processing time: Estimated <5 minutes for 500 records
+
+**Error Handling:**
+- Retry failed queries (transient database errors)
+- Alert on file write failures
+- Log all operations for audit trail
+- Generate error reports for manual review
 
 ### Queue Technology Stack
-- Options:
-  - Self Developed Queue System - NO GO - reinventing the wheel
-  - RabitMQ
-  - Kafka
 
-| Alternative | Description                           | Pros                                                                                      | Cons                                              | Suitable for Dunderly?                      |
+**Purpose**: Enable asynchronous, reliable messaging between system components
+
+**Technology Evaluation:**
+
+| Alternative | Description                           | Pros                                                                                      | Cons                                              | Decision for Dunderly                       |
 | ----------- | ------------------------------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------- | ------------------------------------------- |
-| RabitMQ     | General purpose message-broker engine | - Easy to setup and use<br>- Good documentation<br>- Supports multiple messaging patterns | - Not designed for high-throughput scenarios      | YES - suitable for low to medium throughput |
-| Kafka       | Distributed event streaming platform  | - High throughput<br>- Scalable<br>- Durable message storage                              | - More complex setup<br>- Requires more resources | NO GO - overkill for Dunderly's needs       |
+| **RabbitMQ** | General-purpose message broker        | - Easy setup and configuration<br>- Excellent documentation and community<br>- Supports multiple messaging patterns<br>- Low resource requirements<br>- Suitable for low-medium throughput | - Not designed for high-throughput scenarios<br>- Limited built-in analytics | ✅ **Selected** - Perfect fit for requirements |
+| **Apache Kafka** | Distributed event streaming platform  | - High throughput (millions of messages/sec)<br>- Horizontally scalable<br>- Durable message storage<br>- Built-in stream processing | - Complex setup and configuration<br>- Requires more resources (RAM, disk)<br>- Steeper learning curve<br>- Overkill for low message volume | ❌ Not suitable - Unnecessary complexity |
+| **Self-Developed** | Custom queue implementation       | - Full control over features<br>- No external dependencies | - Reinventing the wheel<br>- High maintenance burden<br>- Lack of proven reliability<br>- Missing enterprise features | ❌ Not suitable - Poor use of resources |
 
-![Diagram](./diagrams/components-n-messaging-system%20-%20logic%20diagram.png)
-![Diagram](./diagrams/components-n-messaging-system%20-%20physical%20diagram.png)
-![Diagram](./diagrams/components-n-messaging-system%20-%20technical%20diagram.png)
+**Selected Solution: RabbitMQ**
+
+**Rationale:**
+- Low message volume (~10 users, 500 employees)
+- Simple use cases (logging, event notifications)
+- Ease of setup aligns with small operations team
+- Proven reliability in similar environments
+- Adequate performance for current and future scale
+
+**Usage Patterns:**
+1. **Logging**: All services publish log messages to dedicated exchange/queue
+2. **Event Notifications**: Services publish domain events (e.g., EmployeeCreated, SalaryApproved)
+3. **Asynchronous Processing**: Decouple time-consuming operations from user requests
+
+**Configuration:**
+- Single RabbitMQ instance sufficient initially
+- Can add clustering for high availability if needed
+- Persistent queues for critical messages (logging)
+- Durable exchanges for reliability
+
+## Architecture Diagrams
+
+### Logic Diagram
+Illustrates the high-level components and their logical relationships.
+
+![Components & Messaging System - Logic Diagram](./diagrams/components-n-messaging-system%20-%20logic%20diagram.png)
+
+### Physical Diagram
+Shows the deployment topology and infrastructure layout.
+
+![Components & Messaging System - Physical Diagram](./diagrams/components-n-messaging-system%20-%20physical%20diagram.png)
+
+### Technical Diagram
+Details the technology stack and communication protocols.
+
+![Components & Messaging System - Technical Diagram](./diagrams/components-n-messaging-system%20-%20technical%20diagram.png)
+
+## Security Considerations
+
+**Authentication & Authorization:**
+- Implement role-based access control (RBAC)
+- User roles: Employee, Manager, HR Manager, System Admin
+- JWT tokens for API authentication
+- Session management for web interface
+
+**Data Protection:**
+- Encrypt sensitive data at rest (salaries, personal information)
+- Use HTTPS/TLS for all communications
+- Secure file transfer for payment system integration
+- Regular security audits and penetration testing
+
+**Audit Logging:**
+- Log all data modifications (who, what, when)
+- Maintain immutable audit trail
+- Separate audit logs from application logs
+- Retention policy: 7 years for compliance
+
+## Backup and Disaster Recovery
+
+**Backup Strategy:**
+- Daily full backups of SQL Server database
+- Transaction log backups every hour (RPO: 1 hour)
+- Document storage included in database backups
+- Offsite backup storage for disaster recovery
+
+**Recovery Procedures:**
+- Recovery Time Objective (RTO): 4 hours
+- Recovery Point Objective (RPO): 1 hour
+- Documented recovery procedures
+- Regular recovery testing (quarterly)
+
+**High Availability:**
+- Active-Active deployment for services
+- Load balancer health checks
+- Automatic failover for critical components
+- Monitoring and alerting for all services
+
+## Monitoring and Observability
+
+**Key Metrics:**
+- Application response times
+- Error rates and exceptions
+- Database query performance
+- Queue depth and processing lag
+- Service availability (uptime)
+
+**Alerting:**
+- Critical: Service down, database unavailable
+- Warning: High response times, elevated error rates
+- Info: Successful batch job completion, backup completion
+
+**Logging Levels:**
+- ERROR: Application errors requiring immediate attention
+- WARNING: Potential issues or unusual conditions
+- INFO: Significant application events (logins, approvals)
+- DEBUG: Detailed troubleshooting information (non-production)
+
+## Future Enhancements
+
+**Potential Improvements:**
+1. **Mobile Application**: Native iOS/Android apps for on-the-go access
+2. **Advanced Reporting**: Business intelligence dashboard with analytics
+3. **Performance Reviews**: Integrate performance management workflow
+4. **Time Tracking**: Add attendance and time-off tracking
+5. **Benefits Management**: Expand to include health insurance, retirement plans
+6. **API for Payment System**: Replace file-based integration with REST API
+7. **Single Sign-On (SSO)**: Integrate with corporate identity provider
+8. **Document OCR**: Automatic data extraction from scanned documents
+
+**Scalability Roadmap:**
+- Current: 500 employees, 10 concurrent users
+- Phase 2 (1-2 years): 1000 employees, 25 concurrent users
+- Phase 3 (3-5 years): 2000+ employees, 50+ concurrent users, multi-location support
+
+## Conclusion
+
+The Dunderly HR Management System architecture provides a robust, scalable solution for managing employee records, salaries, vacations, and payroll. The service-oriented design with shared data store balances simplicity with functionality, appropriate for the company's current scale and expected growth.
+
+**Key Strengths:**
+- Aligned with existing technology stack (Microsoft/.NET)
+- Appropriate scale for current and projected needs
+- Clear separation of concerns across services
+- Proven technology choices with minimal risk
+- Straightforward deployment and maintenance
+
+**Success Metrics:**
+- System availability: >99% uptime (max 4 hours downtime/month)
+- Response time: <2 seconds for all user actions
+- Successful monthly payroll processing: 100%
+- User satisfaction: Measured through periodic surveys
