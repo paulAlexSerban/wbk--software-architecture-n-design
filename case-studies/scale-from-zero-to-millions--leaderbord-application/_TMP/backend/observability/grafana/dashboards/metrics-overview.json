@@ -1,0 +1,495 @@
+{
+  "id": null,
+  "uid": "metrics-overview",
+  "title": "Metrics Overview",
+  "tags": [
+    "otel",
+    "clickhouse",
+    "metrics"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 6,
+  "refresh": "10s",
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Total Requests (last 1h)",
+      "description": "Total number of HTTP server requests observed in the last hour.",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "targets": [
+        {
+          "queryType": "sql",
+          "rawSql": "SELECT sum(Count) AS requests FROM otel.otel_metrics_histogram WHERE MetricName IN ('http.server.request.duration', 'http.server.duration') AND TimeUnix >= toDateTime($__from/1000) AND TimeUnix <= toDateTime($__to/1000)",
+          "format": 0,
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Error Rate (last 1h)",
+      "description": "Percentage of requests with HTTP status code 500 or higher.",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "targets": [
+        {
+          "queryType": "sql",
+          "rawSql": "SELECT round(100.0 * sumIf(Count, toInt32OrNull(coalesce(nullIf(Attributes['http.response.status_code'], ''), nullIf(Attributes['http.status_code'], ''), '0')) >= 500) / greatest(sum(Count), 1), 2) AS error_rate_pct FROM otel.otel_metrics_histogram WHERE MetricName IN ('http.server.request.duration', 'http.server.duration') AND TimeUnix >= toDateTime($__from/1000) AND TimeUnix <= toDateTime($__to/1000)",
+          "format": 0,
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 5
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Avg Response Time (last 1h)",
+      "description": "Average end-to-end request latency from trace durations over the last hour.",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "targets": [
+        {
+          "queryType": "sql",
+          "rawSql": "SELECT round(avg(Duration) / 1e6, 2) AS avg_ms FROM otel.otel_traces WHERE Timestamp >= toDateTime($__from/1000) AND Timestamp <= toDateTime($__to/1000)",
+          "format": 0,
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 200
+              },
+              {
+                "color": "red",
+                "value": 1000
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Throughput (req/sec, last 1h)",
+      "description": "Average request throughput over the last hour.",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "targets": [
+        {
+          "queryType": "sql",
+          "rawSql": "SELECT round(sum(Count) / 3600.0, 4) AS req_per_sec FROM otel.otel_metrics_histogram WHERE MetricName IN ('http.server.request.duration', 'http.server.duration') AND TimeUnix >= toDateTime($__from/1000) AND TimeUnix <= toDateTime($__to/1000)",
+          "format": 0,
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Request Rate (per minute)",
+      "description": "Per-minute request volume trend for HTTP server traffic.",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 4
+      },
+      "targets": [
+        {
+          "queryType": "sql",
+          "rawSql": "SELECT toStartOfMinute(TimeUnix) AS time, sum(Count) AS requests FROM otel.otel_metrics_histogram WHERE MetricName IN ('http.server.request.duration', 'http.server.duration') AND TimeUnix >= toDateTime($__from/1000) AND TimeUnix <= toDateTime($__to/1000) GROUP BY time ORDER BY time",
+          "format": 1,
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Avg Response Time per minute (ms)",
+      "description": "Per-minute average end-to-end request latency from trace durations.",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 4
+      },
+      "targets": [
+        {
+          "queryType": "sql",
+          "rawSql": "SELECT toStartOfMinute(Timestamp) AS time, round(avg(Duration) / 1e6, 2) AS avg_ms FROM otel.otel_traces WHERE Timestamp >= toDateTime($__from/1000) AND Timestamp <= toDateTime($__to/1000) GROUP BY time ORDER BY time",
+          "format": 1,
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      }
+    },
+    {
+      "id": 7,
+      "type": "piechart",
+      "title": "Requests by HTTP Status Code (last 1h)",
+      "description": "Distribution of request counts by HTTP response status code.",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 0,
+        "y": 13
+      },
+      "targets": [
+        {
+          "queryType": "sql",
+          "rawSql": "WITH reqs AS (SELECT coalesce(nullIf(Attributes['http.response.status_code'], ''), nullIf(Attributes['http.status_code'], ''), 'other') AS sc, Count FROM otel.otel_metrics_histogram WHERE MetricName IN ('http.server.request.duration', 'http.server.duration') AND TimeUnix >= toDateTime($__from/1000) AND TimeUnix <= toDateTime($__to/1000)) SELECT sumIf(Count, sc = '200') AS `200`, sumIf(Count, sc = '201') AS `201`, sumIf(Count, sc = '204') AS `204`, sumIf(Count, sc = '301') AS `301`, sumIf(Count, sc = '302') AS `302`, sumIf(Count, sc = '304') AS `304`, sumIf(Count, sc = '400') AS `400`, sumIf(Count, sc = '401') AS `401`, sumIf(Count, sc = '403') AS `403`, sumIf(Count, sc = '404') AS `404`, sumIf(Count, sc = '500') AS `500`, sumIf(Count, sc = '502') AS `502`, sumIf(Count, sc = '503') AS `503`, sumIf(Count, sc = 'other') AS other FROM reqs",
+          "format": 0,
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "right"
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      }
+    },
+    {
+      "id": 8,
+      "type": "table",
+      "title": "Top Routes by Request Count (last 1h)",
+      "description": "Top mapped routes by request volume with average and max end-to-end latency from traces.",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 16,
+        "x": 8,
+        "y": 13
+      },
+      "targets": [
+        {
+          "queryType": "sql",
+          "rawSql": "SELECT coalesce(nullIf(SpanAttributes['http.method'], ''), 'unknown') AS method, coalesce(nullIf(SpanAttributes['http.route'], ''), nullIf(SpanAttributes['http.target'], ''), 'unknown') AS route, count() AS requests, round(avg(Duration) / 1e6, 2) AS avg_ms, round(max(Duration) / 1e6, 2) AS max_ms FROM otel.otel_traces WHERE Timestamp >= toDateTime($__from/1000) AND Timestamp <= toDateTime($__to/1000) AND coalesce(nullIf(SpanAttributes['http.route'], ''), nullIf(SpanAttributes['http.target'], ''), 'unknown') != 'unknown' GROUP BY method, route ORDER BY requests DESC LIMIT 20",
+          "format": 0,
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "footer": {
+          "show": false
+        }
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "avg_ms"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "ms"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "max_ms"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "ms"
+              }
+            ]
+          }
+        ]
+      }
+    },
+        {
+      "id": 9,
+      "type": "timeseries",
+      "title": "4xx vs 5xx Error Rate per minute",
+      "description": "Client and server error counts per minute to distinguish failure classes.",
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse" },
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 22 },
+      "targets": [
+        {
+          "queryType": "sql",
+          "rawSql": "SELECT toStartOfMinute(TimeUnix) AS time, sumIf(Count, toInt32OrNull(coalesce(nullIf(Attributes['http.response.status_code'], ''), nullIf(Attributes['http.status_code'], ''), '0')) BETWEEN 400 AND 499) AS client_errors_4xx, sumIf(Count, toInt32OrNull(coalesce(nullIf(Attributes['http.response.status_code'], ''), nullIf(Attributes['http.status_code'], ''), '0')) >= 500) AS server_errors_5xx FROM otel.otel_metrics_histogram WHERE MetricName IN ('http.server.request.duration', 'http.server.duration') AND TimeUnix >= toDateTime($__from/1000) AND TimeUnix <= toDateTime($__to/1000) GROUP BY time ORDER BY time",
+          "format": 1,
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short" },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "client_errors_4xx" }, "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "server_errors_5xx" }, "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }] }
+        ]
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "multi" }
+      }
+    },
+        {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Requests by HTTP Method per minute",
+      "description": "Per-minute request breakdown by HTTP method.",
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse" },
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 22 },
+      "targets": [
+        {
+          "queryType": "sql",
+          "rawSql": "SELECT toStartOfMinute(TimeUnix) AS time, sumIf(Count, coalesce(nullIf(Attributes['http.request.method'], ''), nullIf(Attributes['http.method'], '')) = 'GET') AS GET, sumIf(Count, coalesce(nullIf(Attributes['http.request.method'], ''), nullIf(Attributes['http.method'], '')) = 'POST') AS POST, sumIf(Count, coalesce(nullIf(Attributes['http.request.method'], ''), nullIf(Attributes['http.method'], '')) = 'PUT') AS PUT, sumIf(Count, coalesce(nullIf(Attributes['http.request.method'], ''), nullIf(Attributes['http.method'], '')) = 'DELETE') AS DELETE FROM otel.otel_metrics_histogram WHERE MetricName IN ('http.server.request.duration', 'http.server.duration') AND TimeUnix >= toDateTime($__from/1000) AND TimeUnix <= toDateTime($__to/1000) GROUP BY time ORDER BY time",
+          "format": 1,
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short" },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "multi" }
+      }
+    }
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  }
+}

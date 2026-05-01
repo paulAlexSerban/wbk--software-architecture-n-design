@@ -1,0 +1,128 @@
+services:
+  leaderboard-ssr-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - DB_PATH=/app/data/leaderboard.json
+      - LOG_LEVEL=debug
+      - LOG_FILE=/var/log/app/app.log
+      - OTEL_SERVICE_NAME=leaderboard-ssr-service
+      - OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://otel-collector:4318/v1/traces
+      - OTEL_EXPORTER_OTLP_METRICS_ENDPOINT=http://otel-collector:4318/v1/metrics
+    volumes:
+      - app_logs:/var/log/app
+    depends_on:
+      - otel-collector
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2G
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:24.8
+    environment:
+      - CLICKHOUSE_DB=${CLICKHOUSE_DATABASE:-otel}
+      - CLICKHOUSE_USER=${CLICKHOUSE_USERNAME:-otel}
+      - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD:-otel}
+      - CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    healthcheck:
+      test: ["CMD-SHELL", "clickhouse-client --host localhost --query 'SELECT 1' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 2GB
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - ./observability/clickhouse/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.111.0
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    restart: unless-stopped
+    environment:
+      - CLICKHOUSE_DSN=tcp://clickhouse:9000?dial_timeout=10s&compress=lz4
+      - CLICKHOUSE_DATABASE=${CLICKHOUSE_DATABASE:-otel}
+      - CLICKHOUSE_USERNAME=${CLICKHOUSE_USERNAME:-otel}
+      - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD:-otel}
+    volumes:
+      - ./observability/otel/collector-config.yaml:/etc/otelcol-contrib/config.yaml:ro
+      - app_logs:/var/log/app:ro
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_INSTALL_PLUGINS=grafana-clickhouse-datasource
+      - CLICKHOUSE_DATABASE=${CLICKHOUSE_DATABASE:-otel}
+      - CLICKHOUSE_USERNAME=${CLICKHOUSE_USERNAME:-otel}
+      - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD:-otel}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+      prometheus:
+        condition: service_started
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --web.enable-remote-write-receiver
+      - --storage.tsdb.retention.time=15d
+    ports:
+      - "9091:9090"
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+
+  k6:
+    image: grafana/k6:0.53.0
+    profiles: ["perf"]
+    environment:
+      - BASE_URL=http://leaderboard-ssr-service:3000
+      - K6_PROFILE=load
+      - K6_OUT=experimental-prometheus-rw
+      - K6_PROMETHEUS_RW_SERVER_URL=http://prometheus:9090/api/v1/write
+      - K6_PROMETHEUS_RW_TREND_STATS=p(90),p(95),p(99),avg,min,max
+      - K6_RUN_TAG=adhoc
+      - K6_STORAGE_LAYER=unknown
+      - K6_BASELINE_LABEL=adhoc
+    command: ["run", "/scripts/main.js"]
+    volumes:
+      - ./performance/k6:/scripts:ro
+      - ./reports:/reports:rw
+    depends_on:
+      - leaderboard-ssr-service
+      - prometheus
+
+volumes:
+  clickhouse_data:
+  grafana_data:
+  app_logs:
+  prometheus_data:
+

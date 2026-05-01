@@ -1,0 +1,189 @@
+{
+  "id": null,
+  "uid": "mvc-overview",
+  "title": "MVC Overview",
+  "tags": ["otel", "clickhouse", "mvc", "presentational-pattern"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Controller Spans (last 1h)",
+      "description": "Number of controller action executions observed in the last hour.",
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse" },
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "targets": [
+        { "queryType": "sql", "rawSql": "SELECT count() AS controller_spans FROM otel.otel_traces WHERE Timestamp >= now() - INTERVAL 1 HOUR AND SpanAttributes['mvc.layer'] = 'controller'", "format": 0, "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "none", "textMode": "auto" }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "View Renders (last 1h)",
+      "description": "Number of Handlebars view renders performed in the last hour.",
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse" },
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "targets": [
+        { "queryType": "sql", "rawSql": "SELECT count() AS view_renders FROM otel.otel_traces WHERE Timestamp >= now() - INTERVAL 1 HOUR AND SpanAttributes['mvc.layer'] = 'view'", "format": 0, "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "none", "textMode": "auto" }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Model Operations (last 1h)",
+      "description": "Number of model-layer operations executed in the last hour.",
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse" },
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "targets": [
+        { "queryType": "sql", "rawSql": "SELECT count() AS model_ops FROM otel.otel_traces WHERE Timestamp >= now() - INTERVAL 1 HOUR AND SpanAttributes['mvc.layer'] = 'model'", "format": 0, "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "none", "textMode": "auto" }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "DB Operations (last 1h)",
+      "description": "Number of data-store operations, including reads and writes, in the last hour.",
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse" },
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "targets": [
+        { "queryType": "sql", "rawSql": "SELECT count() AS db_ops FROM otel.otel_traces WHERE Timestamp >= now() - INTERVAL 1 HOUR AND SpanAttributes['mvc.layer'] = 'db'", "format": 0, "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "none", "textMode": "auto" }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Controller Actions per Minute",
+      "description": "Per-minute controller span count split by controller name.",
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse" },
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 4 },
+      "targets": [
+        { "queryType": "sql", "rawSql": "SELECT toStartOfMinute(Timestamp) AS time, countIf(SpanAttributes['mvc.controller'] = 'leaderboard') AS leaderboard, countIf(SpanAttributes['mvc.controller'] = 'users') AS users FROM otel.otel_traces WHERE Timestamp >= now() - INTERVAL 1 HOUR AND SpanAttributes['mvc.layer'] = 'controller' GROUP BY time ORDER BY time", "format": 1, "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Layer Latency Trend (avg ms)",
+      "description": "Per-minute average latency for controller, view, model, and db spans.",
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse" },
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 4 },
+      "targets": [
+        { "queryType": "sql", "rawSql": "SELECT toStartOfMinute(Timestamp) AS time, round(avgIf(Duration, SpanAttributes['mvc.layer'] = 'controller') / 1e6, 2) AS controller_ms, round(avgIf(Duration, SpanAttributes['mvc.layer'] = 'view') / 1e6, 2) AS view_ms, round(avgIf(Duration, SpanAttributes['mvc.layer'] = 'model') / 1e6, 2) AS model_ms, round(avgIf(Duration, SpanAttributes['mvc.layer'] = 'db') / 1e6, 2) AS db_ms FROM otel.otel_traces WHERE Timestamp >= now() - INTERVAL 1 HOUR AND SpanAttributes['mvc.layer'] IN ('controller', 'view', 'model', 'db') GROUP BY time ORDER BY time", "format": 1, "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ms" }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } }
+    },
+    {
+      "id": 7,
+      "type": "piechart",
+      "title": "MVC Layer Share (last 1h)",
+      "description": "Relative share of spans per MVC layer.",
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse" },
+      "gridPos": { "h": 9, "w": 8, "x": 0, "y": 13 },
+      "targets": [
+        { "queryType": "sql", "rawSql": "SELECT countIf(SpanAttributes['mvc.layer'] = 'controller') AS controller, countIf(SpanAttributes['mvc.layer'] = 'view') AS view, countIf(SpanAttributes['mvc.layer'] = 'model') AS model, countIf(SpanAttributes['mvc.layer'] = 'db') AS db FROM otel.otel_traces WHERE Timestamp >= now() - INTERVAL 1 HOUR", "format": 0, "refId": "A" }
+      ],
+      "options": { "legend": { "displayMode": "list", "placement": "right" }, "tooltip": { "mode": "single" } },
+      "fieldConfig": { "defaults": {}, "overrides": [] }
+    },
+    {
+      "id": 8,
+      "type": "table",
+      "title": "Top Controller Actions",
+      "description": "Controller actions ranked by execution count, average latency, P95 latency, and error count.",
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse" },
+      "gridPos": { "h": 9, "w": 16, "x": 8, "y": 13 },
+      "targets": [
+        { "queryType": "sql", "rawSql": "SELECT concat(SpanAttributes['mvc.controller'], '.', SpanAttributes['mvc.action']) AS action, SpanAttributes['mvc.transport'] AS transport, count() AS calls, round(avg(Duration) / 1e6, 2) AS avg_ms, round(quantile(0.95)(Duration) / 1e6, 2) AS p95_ms, countIf(StatusCode = 'Error') AS errors FROM otel.otel_traces WHERE Timestamp >= now() - INTERVAL 1 HOUR AND SpanAttributes['mvc.layer'] = 'controller' GROUP BY action, transport ORDER BY calls DESC LIMIT 20", "format": 0, "refId": "A" }
+      ],
+      "options": { "showHeader": true, "footer": { "show": false } },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "avg_ms" }, "properties": [{ "id": "unit", "value": "ms" }] },
+          { "matcher": { "id": "byName", "options": "p95_ms" }, "properties": [{ "id": "unit", "value": "ms" }] }
+        ]
+      }
+    },
+    {
+      "id": 9,
+      "type": "table",
+      "title": "View Render Performance",
+      "description": "Handlebars view render counts and latency profile per view.",
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse" },
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 22 },
+      "targets": [
+        { "queryType": "sql", "rawSql": "SELECT SpanAttributes['mvc.view'] AS view, count() AS renders, round(avg(Duration) / 1e6, 2) AS avg_ms, round(quantile(0.95)(Duration) / 1e6, 2) AS p95_ms FROM otel.otel_traces WHERE Timestamp >= now() - INTERVAL 1 HOUR AND SpanAttributes['mvc.layer'] = 'view' GROUP BY view ORDER BY renders DESC LIMIT 20", "format": 0, "refId": "A" }
+      ],
+      "options": { "showHeader": true, "footer": { "show": false } },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "avg_ms" }, "properties": [{ "id": "unit", "value": "ms" }] },
+          { "matcher": { "id": "byName", "options": "p95_ms" }, "properties": [{ "id": "unit", "value": "ms" }] }
+        ]
+      }
+    },
+    {
+      "id": 10,
+      "type": "table",
+      "title": "Model and DB Hotspots",
+      "description": "Slowest model and db operations with call count and latency summary.",
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse" },
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 22 },
+      "targets": [
+        { "queryType": "sql", "rawSql": "SELECT SpanAttributes['mvc.layer'] AS layer, coalesce(nullIf(SpanAttributes['mvc.model'], ''), nullIf(SpanAttributes['db.operation'], ''), 'unknown') AS operation_group, coalesce(nullIf(SpanAttributes['mvc.operation'], ''), nullIf(SpanAttributes['db.operation'], ''), 'unknown') AS operation, count() AS calls, round(avg(Duration) / 1e6, 2) AS avg_ms, round(quantile(0.95)(Duration) / 1e6, 2) AS p95_ms FROM otel.otel_traces WHERE Timestamp >= now() - INTERVAL 1 HOUR AND SpanAttributes['mvc.layer'] IN ('model', 'db') GROUP BY layer, operation_group, operation ORDER BY p95_ms DESC LIMIT 20", "format": 0, "refId": "A" }
+      ],
+      "options": { "showHeader": true, "footer": { "show": false } },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "avg_ms" }, "properties": [{ "id": "unit", "value": "ms" }] },
+          { "matcher": { "id": "byName", "options": "p95_ms" }, "properties": [{ "id": "unit", "value": "ms" }] }
+        ]
+      }
+    },
+    {
+      "id": 11,
+      "type": "table",
+      "title": "MVC Metrics Streams",
+      "description": "Custom OTel MVC metrics emitted by the service, useful to verify metric export and naming.",
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse" },
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 31 },
+      "targets": [
+        { "queryType": "sql", "rawSql": "SELECT MetricName AS metric, any(MetricUnit) AS unit, count() AS points, max(TimeUnix) AS last_seen FROM otel.otel_metrics_histogram WHERE MetricName LIKE 'mvc.%' GROUP BY metric ORDER BY metric ASC LIMIT 50", "format": 0, "refId": "A" }
+      ],
+      "options": { "showHeader": true, "footer": { "show": false } },
+      "fieldConfig": { "defaults": {}, "overrides": [] }
+    }
+  ],
+  "templating": { "list": [] },
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": {},
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "name": "leaderboard-ssr-service",
+  "version": "1.0.0",
+  "description": "Server-side rendered leaderboard service",
+  "main": "src/server.js",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:mutation": "stryker run stryker.config.json",
+    "perf:smoke": "docker compose --profile perf run --rm -e K6_PROFILE=smoke k6",
+    "perf:load": "docker compose --profile perf run --rm -e K6_PROFILE=load k6",
+    "perf:stress": "docker compose --profile perf run --rm -e K6_PROFILE=stress k6",
+    "perf:spike": "docker compose --profile perf run --rm -e K6_PROFILE=spike k6",
+    "perf:soak": "docker compose --profile perf run --rm -e K6_PROFILE=soak k6",
+    "perf:baseline": "node scripts/perf/capture-baseline.mjs",
+    "perf:baseline:before-sqlite": "node scripts/perf/capture-baseline.mjs --label before-sqlite --storage json-file",
+    "perf:baseline:after-sqlite": "node scripts/perf/capture-baseline.mjs --label after-sqlite --storage sqlite",
+    "perf:compare": "node scripts/perf/compare-baselines.mjs"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/tests/**/*.test.js"
+    ]
+  },
+  "dependencies": {
+    "@opentelemetry/api": "^1.9.1",
+    "@opentelemetry/auto-instrumentations-node": "^0.73.0",
+    "@opentelemetry/core": "^2.7.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.215.0",
+    "@opentelemetry/resources": "^2.7.0",
+    "@opentelemetry/sdk-node": "^0.215.0",
+    "@opentelemetry/semantic-conventions": "^1.40.0",
+    "express": "^4.21.2",
+    "express-handlebars": "^8.0.1",
+    "pino": "^10.3.1",
+    "pino-http": "^11.0.0"
+  },
+  "devDependencies": {
+    "@stryker-mutator/core": "^9.6.1",
+    "@stryker-mutator/jest-runner": "^9.6.1",
+    "jest": "^30.3.0",
+    "supertest": "^7.2.2"
+  }
+}
