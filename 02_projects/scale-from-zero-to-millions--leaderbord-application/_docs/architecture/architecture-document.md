@@ -15,7 +15,6 @@ The application is designed to provide a real-time leaderboard for users based o
 - Real-Time Updates: Users expect to see their rankings update in real-time as they play.
 - Scalability: The system must handle a large number of concurrent users and requests without degradation in performance.
 - Data Consistency: The leaderboard must reflect accurate rankings based on user scores, even under high load.
-- Security: User data must be protected, and the system should prevent unauthorized access.
 
 ## Requirements
 1. **Functional Requirements**
