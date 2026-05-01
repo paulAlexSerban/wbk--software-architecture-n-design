@@ -181,11 +181,11 @@ Based on [the requirements](#requirements), the following components comprise th
 
 **Technology Selection Rationale:**
 
-| Technology        | Pros                                                                              | Cons                                         | Decision          |
-| ----------------- | --------------------------------------------------------------------------------- | -------------------------------------------- | ----------------- |
-| RabbitMQ          | - Easy setup and configuration<br>- Excellent documentation<br>- Multiple messaging patterns<br>- Suitable for low-medium throughput | - Not designed for high-throughput scenarios | ✅ **Selected**   |
-| Apache Kafka      | - High throughput<br>- Highly scalable<br>- Durable message storage               | - Complex setup<br>- Requires more resources<br>- Overkill for Dunderly's scale | ❌ Not suitable  |
-| Self-Developed    | - Full control                                                                    | - Reinventing the wheel<br>- Maintenance burden<br>- Lack of proven reliability | ❌ Not suitable  |
+| Technology     | Pros                                                                                                                                 | Cons                                                                            | Decision       |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------- | -------------- |
+| RabbitMQ       | - Easy setup and configuration<br>- Excellent documentation<br>- Multiple messaging patterns<br>- Suitable for low-medium throughput | - Not designed for high-throughput scenarios                                    | ✅ **Selected** |
+| Apache Kafka   | - High throughput<br>- Highly scalable<br>- Durable message storage                                                                  | - Complex setup<br>- Requires more resources<br>- Overkill for Dunderly's scale | ❌ Not suitable |
+| Self-Developed | - Full control                                                                                                                       | - Reinventing the wheel<br>- Maintenance burden<br>- Lack of proven reliability | ❌ Not suitable |
 
 **Deployment:**
 - Single RabbitMQ instance sufficient for current scale
@@ -307,11 +307,11 @@ Based on Classic Layered Pattern, adapted for long-running background service:
 
 **Decision**: ❌ Not suitable for Dunderly
 
-| Aspect | Analysis |
-|--------|----------|
-| **Pros** | - Powerful search and analytics (Elasticsearch)<br>- Import logs from many sources (Logstash)<br>- Excellent visualization and filtering (Kibana)<br>- Scalable and flexible architecture<br>- Open-source with large community |
-| **Cons** | - Complex installation and setup<br>- Requires significant maintenance effort<br>- Resource-intensive (CPU, memory, storage)<br>- Overkill for low-volume logging (~10 users, 500 employees)<br>- Steep learning curve |
-| **Verdict** | Not suitable: Complexity and resource requirements far exceed Dunderly's needs. Custom solution provides adequate functionality with lower overhead. |
+| Aspect      | Analysis                                                                                                                                                                                                                        |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Pros**    | - Powerful search and analytics (Elasticsearch)<br>- Import logs from many sources (Logstash)<br>- Excellent visualization and filtering (Kibana)<br>- Scalable and flexible architecture<br>- Open-source with large community |
+| **Cons**    | - Complex installation and setup<br>- Requires significant maintenance effort<br>- Resource-intensive (CPU, memory, storage)<br>- Overkill for low-volume logging (~10 users, 500 employees)<br>- Steep learning curve          |
+| **Verdict** | Not suitable: Complexity and resource requirements far exceed Dunderly's needs. Custom solution provides adequate functionality with lower overhead.                                                                            |
 
 **Alternative Consideration**: If logging requirements increase significantly (e.g., 1000+ employees, complex compliance requirements, advanced analytics needs), ELK Stack could be reconsidered.
 
@@ -398,12 +398,12 @@ The service must handle two data types:
 
 **Document (BLOB) Storage Alternatives:**
 
-| Alternative         | Description                                                | Examples                    | Pros                                                                      | Cons                                                                          | Decision for Dunderly           |
-| ------------------- | ---------------------------------------------------------- | --------------------------- | ------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | ------------------------------- |
-| Relational Database | Store documents in BLOB column type                        | SQL Server FILESTREAM       | - Part of app transaction<br>- Included in DB backup/DR<br>- ACID guarantees | - Clunky syntax<br>- Size limitations<br>- Can bloat database                 | ✅ **Selected** (suitable for small volume) |
-| File System         | Store files on file system, hold pointer in DB             | NFS, SMB, Local FS          | - Simple implementation<br>- Easy file access                              | - Separate backup/DR<br>- Scalability issues<br>- Not transactional            | ❌ Backup/DR complexity         |
-| Object Store        | Specialized BLOB storage mechanism                         | MinIO, Ceph, OpenStack      | - Highly scalable<br>- Designed for large files                            | - Additional component<br>- Separate backup/DR<br>- Complex setup              | ❌ Adds unnecessary complexity  |
-| Cloud Storage       | Public cloud storage services                              | AWS S3, Azure Blob, GCS     | - Highly scalable<br>- Managed service<br>- High availability              | - Cloud provider dependency<br>- Ongoing costs<br>- Internet required<br>- Not on-premise | ❌ Not suitable for on-premise |
+| Alternative         | Description                                    | Examples                | Pros                                                                         | Cons                                                                                      | Decision for Dunderly                      |
+| ------------------- | ---------------------------------------------- | ----------------------- | ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------ |
+| Relational Database | Store documents in BLOB column type            | SQL Server FILESTREAM   | - Part of app transaction<br>- Included in DB backup/DR<br>- ACID guarantees | - Clunky syntax<br>- Size limitations<br>- Can bloat database                             | ✅ **Selected** (suitable for small volume) |
+| File System         | Store files on file system, hold pointer in DB | NFS, SMB, Local FS      | - Simple implementation<br>- Easy file access                                | - Separate backup/DR<br>- Scalability issues<br>- Not transactional                       | ❌ Backup/DR complexity                     |
+| Object Store        | Specialized BLOB storage mechanism             | MinIO, Ceph, OpenStack  | - Highly scalable<br>- Designed for large files                              | - Additional component<br>- Separate backup/DR<br>- Complex setup                         | ❌ Adds unnecessary complexity              |
+| Cloud Storage       | Public cloud storage services                  | AWS S3, Azure Blob, GCS | - Highly scalable<br>- Managed service<br>- High availability                | - Cloud provider dependency<br>- Ongoing costs<br>- Internet required<br>- Not on-premise | ❌ Not suitable for on-premise              |
 
 **Selected Solution**: SQL Server with BLOB storage
 - Appropriate for 25 GB data volume
@@ -456,16 +456,16 @@ The service must handle two data types:
 
 **Endpoints:**
 
-| Functionality                | HTTP Method | Endpoint                                 | Return Codes  | Description                                      |
-| ---------------------------- | ----------- | ---------------------------------------- | ------------- | ------------------------------------------------ |
-| Get employee details by ID   | GET         | `/api/v1/employee/{id}`                  | 200, 404      | Retrieve full details of an employee by their ID |
+| Functionality                | HTTP Method | Endpoint                                   | Return Codes  | Description                                      |
+| ---------------------------- | ----------- | ------------------------------------------ | ------------- | ------------------------------------------------ |
+| Get employee details by ID   | GET         | `/api/v1/employee/{id}`                    | 200, 404      | Retrieve full details of an employee by their ID |
 | List employees by params     | GET         | `/api/v1/employee?name=...&department=...` | 200, 400      | Retrieve a list of employees based on parameters |
-| Add employee                 | POST        | `/api/v1/employee`                       | 201, 400      | Create a new employee record                     |
-| Update employee details      | PUT         | `/api/v1/employee/{id}`                  | 200, 400, 404 | Update details of an existing employee           |
-| Remove employee              | DELETE      | `/api/v1/employee/{id}`                  | 200, 404      | Soft delete - mark employee as inactive          |
-| Add employee document        | POST        | `/api/v1/employee/{id}/documents`        | 201, 400, 404 | Upload a document for an employee                |
-| Remove employee document     | DELETE      | `/api/v1/employee/{id}/documents/{docId}` | 200, 404      | Soft delete - mark document as inactive          |
-| Get employee document by ID  | GET         | `/api/v1/employee/{id}/documents/{docId}` | 200, 404      | Download a specific document                     |
+| Add employee                 | POST        | `/api/v1/employee`                         | 201, 400      | Create a new employee record                     |
+| Update employee details      | PUT         | `/api/v1/employee/{id}`                    | 200, 400, 404 | Update details of an existing employee           |
+| Remove employee              | DELETE      | `/api/v1/employee/{id}`                    | 200, 404      | Soft delete - mark employee as inactive          |
+| Add employee document        | POST        | `/api/v1/employee/{id}/documents`          | 201, 400, 404 | Upload a document for an employee                |
+| Remove employee document     | DELETE      | `/api/v1/employee/{id}/documents/{docId}`  | 200, 404      | Soft delete - mark document as inactive          |
+| Get employee document by ID  | GET         | `/api/v1/employee/{id}/documents/{docId}`  | 200, 404      | Download a specific document                     |
 | Retrieve documents by params | GET         | `/api/v1/employee/{id}/documents?type=...` | 200, 400      | List documents with filtering                    |
 
 **Response Codes Explained:**
@@ -540,14 +540,14 @@ The service must handle two data types:
 
 **Endpoints:**
 
-| Functionality          | HTTP Method | Endpoint                                     | Return Codes  | Description                               |
-| ---------------------- | ----------- | -------------------------------------------- | ------------- | ----------------------------------------- |
-| Add salary request     | POST        | `/api/v1/salary/request`                     | 201, 400      | Create a new salary change request        |
-| Remove salary request  | DELETE      | `/api/v1/salary/request/{requestId}`         | 200, 404      | Delete a salary change request            |
-| Get salary requests    | GET         | `/api/v1/salary/requests?status=...&employeeId=...` | 200, 400      | Retrieve salary change requests with filters |
-| Get salary request by ID | GET       | `/api/v1/salary/request/{requestId}`         | 200, 404      | Retrieve specific salary request details  |
-| Approve salary request | POST        | `/api/v1/salary/request/{requestId}/approval` | 200, 400, 404 | Approve a salary change request           |
-| Reject salary request  | POST        | `/api/v1/salary/request/{requestId}/rejection` | 200, 400, 404 | Reject a salary change request            |
+| Functionality            | HTTP Method | Endpoint                                            | Return Codes  | Description                                  |
+| ------------------------ | ----------- | --------------------------------------------------- | ------------- | -------------------------------------------- |
+| Add salary request       | POST        | `/api/v1/salary/request`                            | 201, 400      | Create a new salary change request           |
+| Remove salary request    | DELETE      | `/api/v1/salary/request/{requestId}`                | 200, 404      | Delete a salary change request               |
+| Get salary requests      | GET         | `/api/v1/salary/requests?status=...&employeeId=...` | 200, 400      | Retrieve salary change requests with filters |
+| Get salary request by ID | GET         | `/api/v1/salary/request/{requestId}`                | 200, 404      | Retrieve specific salary request details     |
+| Approve salary request   | POST        | `/api/v1/salary/request/{requestId}/approval`       | 200, 400, 404 | Approve a salary change request              |
+| Reject salary request    | POST        | `/api/v1/salary/request/{requestId}/rejection`      | 200, 400, 404 | Reject a salary change request               |
 
 **Request Flow:**
 1. Manager creates salary request (POST to `/salary/request`)
@@ -617,12 +617,12 @@ The service must handle two data types:
 
 **Endpoints:**
 
-| Functionality               | HTTP Method | Endpoint                                | Return Codes  | Description                                 |
-| --------------------------- | ----------- | --------------------------------------- | ------------- | ------------------------------------------- |
-| Set available vacation days | PUT         | `/api/v1/vacation/{employeeId}`         | 200, 400, 404 | Set/update vacation day balance (HR only)   |
-| Get available vacation days | GET         | `/api/v1/vacation/{employeeId}`         | 200, 404      | Retrieve current vacation day balance       |
-| Get vacation history        | GET         | `/api/v1/vacation/{employeeId}/history` | 200, 404      | Retrieve vacation usage history             |
-| Reduce vacation days        | POST        | `/api/v1/vacation/{employeeId}/reduction` | 200, 400, 404 | Reduce vacation days (record usage)         |
+| Functionality               | HTTP Method | Endpoint                                  | Return Codes  | Description                               |
+| --------------------------- | ----------- | ----------------------------------------- | ------------- | ----------------------------------------- |
+| Set available vacation days | PUT         | `/api/v1/vacation/{employeeId}`           | 200, 400, 404 | Set/update vacation day balance (HR only) |
+| Get available vacation days | GET         | `/api/v1/vacation/{employeeId}`           | 200, 404      | Retrieve current vacation day balance     |
+| Get vacation history        | GET         | `/api/v1/vacation/{employeeId}/history`   | 200, 404      | Retrieve vacation usage history           |
+| Reduce vacation days        | POST        | `/api/v1/vacation/{employeeId}/reduction` | 200, 400, 404 | Reduce vacation days (record usage)       |
 
 **API Usage Examples:**
 - HR sets initial balance: `PUT /api/v1/vacation/123` with body `{"days": 20}`
@@ -746,11 +746,11 @@ EmployeeId,FirstName,LastName,Salary,EffectiveDate
 
 **Technology Evaluation:**
 
-| Alternative | Description                           | Pros                                                                                      | Cons                                              | Decision for Dunderly                       |
-| ----------- | ------------------------------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------- | ------------------------------------------- |
-| **RabbitMQ** | General-purpose message broker        | - Easy setup and configuration<br>- Excellent documentation and community<br>- Supports multiple messaging patterns<br>- Low resource requirements<br>- Suitable for low-medium throughput | - Not designed for high-throughput scenarios<br>- Limited built-in analytics | ✅ **Selected** - Perfect fit for requirements |
-| **Apache Kafka** | Distributed event streaming platform  | - High throughput (millions of messages/sec)<br>- Horizontally scalable<br>- Durable message storage<br>- Built-in stream processing | - Complex setup and configuration<br>- Requires more resources (RAM, disk)<br>- Steeper learning curve<br>- Overkill for low message volume | ❌ Not suitable - Unnecessary complexity |
-| **Self-Developed** | Custom queue implementation       | - Full control over features<br>- No external dependencies | - Reinventing the wheel<br>- High maintenance burden<br>- Lack of proven reliability<br>- Missing enterprise features | ❌ Not suitable - Poor use of resources |
+| Alternative        | Description                          | Pros                                                                                                                                                                                       | Cons                                                                                                                                        | Decision for Dunderly                         |
+| ------------------ | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
+| **RabbitMQ**       | General-purpose message broker       | - Easy setup and configuration<br>- Excellent documentation and community<br>- Supports multiple messaging patterns<br>- Low resource requirements<br>- Suitable for low-medium throughput | - Not designed for high-throughput scenarios<br>- Limited built-in analytics                                                                | ✅ **Selected** - Perfect fit for requirements |
+| **Apache Kafka**   | Distributed event streaming platform | - High throughput (millions of messages/sec)<br>- Horizontally scalable<br>- Durable message storage<br>- Built-in stream processing                                                       | - Complex setup and configuration<br>- Requires more resources (RAM, disk)<br>- Steeper learning curve<br>- Overkill for low message volume | ❌ Not suitable - Unnecessary complexity       |
+| **Self-Developed** | Custom queue implementation          | - Full control over features<br>- No external dependencies                                                                                                                                 | - Reinventing the wheel<br>- High maintenance burden<br>- Lack of proven reliability<br>- Missing enterprise features                       | ❌ Not suitable - Poor use of resources        |
 
 **Selected Solution: RabbitMQ**
 
