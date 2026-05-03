@@ -1,5 +1,18 @@
 # Software Architecture and Design Workbook
 
+## Use Git Submodules
+- cd to path where you want to add the submodule
+- clone submodule reposiory if not already cloned
+- check if submodule exists: `git submodule status` and check .gitmodules file
+- clone future submodule repository if not already cloned: `git clone <repository-url>` - to clone the submodule repository
+- add submodule: `git submodule add <repository-url> <path>` - to add a new submodule - the path is the pathe where the previous command cloned the repository
+- update submodule: `git submodule update --remote --merge` - to update the submodule to the latest commit
+- initialize submodule: `git submodule init` - to initialize the submodule
+- clone submodule: `git submodule update --init --recursive` - to clone the submodule
+- remove submodule: `git rm --cached <path>` - to remove the submodule from the repository
+- commit changes: `git commit -m "Updated submodule"` - to commit the changes
+- push changes: `git push` - to push the changes to the remote repository
+
 ## Case Studies
 
 - [Async File Processing - Payment Processing Pipeline (PayRawl)](./case-studies/async%20file%20processing%20-%20payment%20processing%20pipeline%20-%20PayRawl/architecture-document.md)
