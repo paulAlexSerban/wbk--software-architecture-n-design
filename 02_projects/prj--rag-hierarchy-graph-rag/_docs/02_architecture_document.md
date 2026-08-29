@@ -432,7 +432,7 @@ Still:
 - Honor EDGAR rate limits and fair-access headers (`User-Agent` with contact, as SEC asks). This is courtesy and ban-avoidance, not optional cleverness.
 - Do not scrape through proxies to dodge fair access.
 - Outputs are not investment advice; the report should say the system is incomplete by construction.
-- LLM providers see filing excerpts (public) and questions. No confidential corpus in v1. If someone later points this at an internal wiki, **this design's "public EDGAR" assumption dies** and retrieval-time ACL becomes a different project ([roadmap 1.3](../../04_challenges/ai-engineering-portfolio-roadmap.md)).
+- LLM providers see filing excerpts (public) and questions. No confidential corpus in v1. If someone later points this at an internal wiki, **this design's "public EDGAR" assumption dies** and retrieval-time ACL becomes a different project ([roadmap 1.3](../../../04_challenges/ai-engineering-portfolio-roadmap.md)).
 
 ## Risks and Mitigation
 

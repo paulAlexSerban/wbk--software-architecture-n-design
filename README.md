@@ -8,6 +8,20 @@ Rather than dumping all of that into a single flat folder, this repo separates w
 
 The goal is a portfolio that shows the full range of architectural competency: not just "I can build things" (Projects), but "I can learn from what already exists" (Case Studies), "I can de-risk the unknown" (Labs), "I can reason about scale under constraints" (System Design Challenges), and "I can make and defend a decision quickly" (Katas).
 
+## Repository layout
+
+Numbered top-level directories follow the five activity types in the order defined in this document:
+
+| # | Activity type | Directory |
+| --- | --- | --- |
+| 1 | Case Study | [`01_case-studies/`](./01_case-studies/) |
+| 2 | Project | [`02_projects/`](./02_projects/) |
+| 3 | Laboratory | [`03_labs/`](./03_labs/) |
+| 4 | System Design Challenge | [`04_challenges/`](./04_challenges/) |
+| 5 | Software Architecture Kata | [`05_katas/`](./05_katas/) |
+
+Shared reference material lives in [`99_workbook/`](./99_workbook/) (templates, patterns) and [`_docs/`](./_docs/) (workbook-level primers). Project folders use a `prj--` prefix.
+
 ## Case Studies VS Projects VS Labs VS System Design Challenges VS Software Architecture Katas
 
 In software engineering and software architecture, these three are related but serve very different purposes.
