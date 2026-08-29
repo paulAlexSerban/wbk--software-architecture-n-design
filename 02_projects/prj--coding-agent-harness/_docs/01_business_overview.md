@@ -1,0 +1,45 @@
+# Coding Agent Harness: Business Overview
+
+## Product Vision
+A harness that takes a well-scoped GitHub issue in a mid-sized repository, does the exploration/edit/test work a competent engineer would do for a small-to-medium change, and hands a human a draft pull request that is either genuinely mergeable with light review or honestly flagged as "I could not do this safely" — never a plausible-looking diff that quietly hides a wrong assumption.
+
+This is deliberately not framed as "autonomous software engineering." It is framed as **compressing the first-draft phase** of a narrow slice of the issue backlog, while leaving triage, review, and merge exactly where they are today: with humans.
+
+## Business Context
+- Current state: engineers pick up issues, write the first draft of a fix themselves, and a reviewer approves it. The bottleneck in most real teams is *not* how fast a first draft can be produced — it is reviewer attention and trust. A tool that produces first drafts faster but that reviewers cannot trust without reading every line as carefully as a stranger's PR has produced no net time savings; it has just moved the cost from "author time" to "reviewer time," and made the reviewer's job worse because they can no longer assume good faith about *why* a line was written a certain way.
+- Repository profile this is designed for: a single mid-sized repository — real CI (minutes, not seconds), an existing test suite of uneven quality, multiple packages/modules, established lint/style conventions, and an issue backlog where a meaningful fraction of issues are ambiguous, under-specified, or coupled to code the reporter never saw. This is explicitly not a demo repo where every issue is a clean, isolated, unit-testable bug.
+- Goal: identify the subset of the backlog (well-scoped bugs, small additive features, mechanical refactors) where a harness can reliably produce a draft that is worth a human's review time, and be equally rigorous about identifying — and refusing — the subset where it cannot.
+- Target users:
+  - **Triaging maintainer**: decides which issues are eligible to be routed to the agent at all (see [Business Rules](#business-rules)).
+  - **Reviewing engineer**: reviews the draft PR exactly as they would review a human contributor's PR — the harness does not get a lower bar, and per [Security Architecture](./05_security_architecture.md) and [Evaluation Framework](./06_evaluation_framework.md), reviewers must be actively discouraged from applying a *lower* bar just because "the tests passed."
+  - **Agent-ops owner**: operates the harness itself — monitors runs, cost, sandbox security posture, and is the one who pulls the plug per the [kill criteria](./06_evaluation_framework.md#kill-criteria-for-the-whole-program).
+
+## Core Value Propositions
+1. **First-draft compression, not review compression**: the harness removes the "read the code, form a plan, write the diff, run the tests" grind for a well-scoped issue. It does not, and is not designed to, remove or shorten the review a competent human would otherwise do.
+2. **A narrow, auditable tool surface instead of general autonomy**: every action the agent can take against the repository is a small, typed, allowlisted operation (see [System Design](./03_system_design.md#2-tool-surface)) — there is no generic "run arbitrary shell command" capability, which is also the harness's primary defense against the fact that it reads text written by strangers (issue bodies, comments, file contents) that may contain adversarial instructions.
+3. **Reversible by construction**: every run happens in an ephemeral, network-isolated sandbox against a disposable branch; the worst a bad run can do is produce a bad draft PR, never a merged change, a pushed secret, or a compromised CI credential.
+4. **Honest failure over confident failure**: the harness is explicitly designed to stop and say "I don't know" (ambiguous requirements, can't get tests green, scope larger than expected) rather than to produce a plausible-looking diff under time/step pressure. A stopped run costs nothing but wall-clock time; a wrong, confidently-merged run costs an incident.
+5. **Evaluated against reality, not a benchmark**: success is measured against a continuously-resampled slice of this repository's actual backlog, not a curated demo set — see [Evaluation Framework](./06_evaluation_framework.md) for why this distinction is the difference between a useful tool and an impressive demo.
+
+## Success Metrics
+All numeric targets below are **illustrative starting points to be calibrated during the Phase 3 pilot** (see [Phased Implementation Plan](./07_phased_implementation_plan.md)), not measured facts. Treat any specific number here as a placeholder for "the number we will actually go measure," not a claim.
+
+1. **Merge-without-material-rework rate**: fraction of opened draft PRs that get merged with the reviewer changing less than some small threshold of lines. This is the primary metric; a high "PR opened" rate with a low merge-without-rework rate means the harness is generating reviewer homework, not saving time (see [Evaluation Framework — Metrics That Matter](./06_evaluation_framework.md#metrics-that-matter-vs-vanity-metrics)).
+2. **Reviewer time delta**: median reviewer time spent on an agent-authored PR vs. a human-authored PR for a comparable issue class. If this number is not clearly better than 1.0x, the harness is not paying for itself regardless of how fast the draft appeared.
+3. **Post-merge revert/incident rate**: agent-authored merged PRs reverted or hotfixed within 14 days, tracked separately from and compared against the baseline rate for human-authored PRs.
+4. **Zero security incidents**: no run ever achieves unsanctioned network egress, reads a secret it wasn't scoped to, or executes a command outside its allowlist — this is a hard gate, not a rate to optimize (see [Security Architecture](./05_security_architecture.md)).
+5. **Cost per successful draft**: LLM tokens + sandbox compute + CI minutes per merge-without-rework outcome, tracked so that cost is visible against the reviewer-time savings it is supposed to justify — engineering cost is rarely the dominant cost here; reviewer time usually is (see [Architecture Document — Cost Analysis](./02_architecture_document.md#cost-analysis)).
+
+## Business Rules
+1. The agent is never invoked on an issue that hasn't been explicitly routed to it by a human triager — there is no automatic "listen to all new issues" mode. Eligibility criteria (size, ambiguity, path) are a triage checklist, not a model judgment call.
+2. The agent never has merge permission and never pushes directly to a protected branch, under any configuration, at any phase — enforced at the GitHub identity level (fine-grained token scopes), not just in orchestrator logic, so a bug in the harness cannot escalate into a bypassed review (see [Security Architecture — Identity and Access](./05_security_architecture.md#identity-and-access-management)).
+3. Certain path globs (authentication code, secrets/credentials handling, CI workflow definitions, infrastructure/deploy configuration) are hard-blocked for the agent by default; touching them requires an explicit, separately-logged elevated approval before the agent may even attempt a change there (see [Security Architecture](./05_security_architecture.md#supply-chain-and-sensitive-path-policy)).
+4. Every run is fully logged — every tool call, every model output, every sandbox network attempt — retained for audit, specifically to support incident investigation for prompt-injection attempts (see [Security Architecture](./05_security_architecture.md)).
+5. A draft PR is always opened as a draft; a human must take an explicit action to mark it ready for review, and a (possibly different) human must take an explicit action to merge it. The agent is never the last actor before code lands (see [ADR-004](./04_architecture_decision_records.md#adr-004)).
+6. Every run operates under an enforced step budget, wall-clock budget, and token/cost budget; there is no "let it keep trying" mode (see [System Design — Stop Conditions](./03_system_design.md#5-stop-conditions)).
+
+## Harness Consumers ("Website Pages" equivalent)
+This is internal engineering tooling, not an end-user product; its "surface area" is operational:
+1. **Triager surface**: whatever issue tracker view/label the maintainer uses to mark an issue "agent-eligible" — the entry point to the entire system.
+2. **Reviewer surface**: the draft pull request itself, plus a structured run report (plan, exploration summary, test results, files touched, cost) attached as a PR comment — the reviewer's job is to use this report, not to trust it blindly (see [Operations Runbook — Reviewer Checklist](./08_operations_runbook.md#reviewer-checklist)).
+3. **Agent-ops surface**: a run dashboard/log store showing in-flight and historical runs, budgets consumed, and stop reasons — the primary tool for distinguishing "the agent is fine" from "the agent is quietly failing in a new way."
