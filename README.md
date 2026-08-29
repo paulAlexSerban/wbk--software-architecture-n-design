@@ -1,33 +1,14 @@
 # Software Architecture and Design Workbook
 
-## Use Git Submodules
-- cd to path where you want to add the submodule
-- clone submodule reposiory if not already cloned
-- check if submodule exists: `git submodule status` and check .gitmodules file
-- clone future submodule repository if not already cloned: `git clone <repository-url>` - to clone the submodule repository
-- add submodule: `git submodule add <repository-url> <path>` - to add a new submodule - the path is the pathe where the previous command cloned the repository
-- update submodule: `git submodule update --remote --merge` - to update the submodule to the latest commit
-- initialize submodule: `git submodule init` - to initialize the submodule
-- clone submodule: `git submodule update --init --recursive` - to clone the submodule
-- remove submodule: `git rm --cached <path>` - to remove the submodule from the repository
-- commit changes: `git commit -m "Updated submodule"` - to commit the changes
-- push changes: `git push` - to push the changes to the remote repository
+## What is this?
 
-## Case Studies
+This repository is a structured workbook for practicing and documenting software architecture and design skills across the different modes of learning that the discipline actually requires. Architecture competence isn't built by one kind of activity — it comes from a mix of analyzing real systems, building things end to end, experimenting safely with new technology, reasoning under time pressure, and rehearsing trade-off decisions until the judgment becomes second nature.
 
-- [Async File Processing - Payment Processing Pipeline (PayRawl)](./case-studies/async%20file%20processing%20-%20payment%20processing%20pipeline%20-%20PayRawl/architecture-document.md)
-- [Data Collection App - Web App (GroceColl)](./case-studies/data%20collection%20app%20-%20web%20app%20-%20grocecoll/architecture-document.md)
-- [HR Managemenr (Dunderly)](./case-studies/hr%20management%20-%20web%20app%20-%20Dunderly/architecture-document.md)
-- [Telemetry Monitoring System - Auto (Mascar.auto)](./case-studies/iot%20telemetry%20monitoring%20-%20Mascar.auto/architecture-document.md)
-- [Telemetry Monitoring System - SAAS (IOToo)](./case-studies/iot%20telemetry%20monitoring%20-%20sass%20-%20IOToo/architecture-document.md)
+Rather than dumping all of that into a single flat folder, this repo separates work by **intent**: what question the activity is trying to answer, and what kind of deliverable proves it was answered. Each top-level directory maps to one of five activity types — Case Study, Project, Laboratory, System Design Challenge, and Software Architecture Kata — described below, along with what distinguishes them, what they produce, and how they build on each other over time.
 
-## To Do's
+The goal is a portfolio that shows the full range of architectural competency: not just "I can build things" (Projects), but "I can learn from what already exists" (Case Studies), "I can de-risk the unknown" (Labs), "I can reason about scale under constraints" (System Design Challenges), and "I can make and defend a decision quickly" (Katas).
 
-- [ ] build-up the AKM (architecture knowledge map) for each case study
-- [ ] synthesize all requirements into ASRs (architecturally significant requirements)
-- [ ] based on ASRs, identify key architectural drivers and write ADRs (architecture decision records)
-
-## Case Studies VS Projects VS Labs
+## Case Studies VS Projects VS Labs VS System Design Challenges VS Software Architecture Katas
 
 In software engineering and software architecture, these three are related but serve very different purposes.
 
@@ -164,64 +145,182 @@ Good architects usually prototype aggressively before making large architectural
 
 ---
 
+### 4. System Design Challenge
+
+A **System Design Challenge** is about reasoning through the architecture of a
+system at a conceptual level, under realistic scale and reliability constraints,
+without necessarily implementing it.
+
+It answers:
+* How would this system be structured to meet its requirements?
+* How does it scale, stay available, and stay consistent (or choose not to)?
+* What are the core components, data flows, and APIs?
+* What are the bottlenecks, and how would they be mitigated?
+
+System Design Challenges are simulation-oriented: they mimic the kind of
+whiteboard/high-level design work architects do before a system is built,
+usually within a fixed time box.
+
+#### Characteristics
+* Focuses on scale, reliability, latency, and data flow
+* Typically time-boxed (45–90 minutes is common)
+* Conceptual/high-level — little to no code
+* Requires estimating capacity (QPS, storage, bandwidth)
+* Emphasizes structured reasoning and communication of design choices
+* Often follows a repeatable framework (requirements → estimation → high-level
+  design → deep dive → bottlenecks)
+
+#### Example Topics
+* Design a URL shortener
+* Design a rate limiter
+* Design a distributed cache
+* Design a live sports betting odds feed
+* Design a notification/fan-out system at Twitter/X scale
+
+#### Deliverables
+* High-level architecture diagram
+* Capacity/throughput estimations
+* API and data model sketch
+* Component breakdown (load balancers, caches, queues, databases)
+* Written or verbal explanation of bottlenecks and mitigations
+
+#### In Software Architecture
+System Design Challenges build the specific muscle of reasoning about
+**scale and distributed-systems mechanics** under time pressure — sharding,
+replication, caching, partitioning, consistency models. They're narrower than a
+Kata (see below) in that they're almost always about a single system's
+scalability and reliability, rather than broader organizational or ambiguous
+business trade-offs.
+
+---
+
+### 5. Software Architecture Kata
+
+A **Software Architecture Kata** is a short, repeatable practice exercise for
+making and defending an architectural decision — the way a martial arts kata
+drills a technique until it becomes instinctive.
+
+It answers:
+* Given ambiguous, incomplete requirements, what would you decide and why?
+* How do you justify a trade-off to stakeholders with competing priorities?
+* How quickly and clearly can you produce a defensible architecture?
+
+Katas are practice-oriented and decision-oriented rather than build-oriented or
+scale-oriented: the point is rehearsing the judgment and communication, not
+producing a working system or even a fully scoped design.
+
+#### Characteristics
+* Small, deliberately ambiguous problem brief (often just a paragraph)
+* Time-boxed, frequently done solo or in small groups (e.g. architecture katas
+  popularized by Ted Neward)
+* Requirements are often contradictory, political, or under-specified on
+  purpose — forcing explicit assumptions
+* Emphasizes articulating and defending trade-offs, not scalability mechanics
+* No implementation, often no formal capacity estimation
+* Repeatable — the same kata can be redone later to compare how judgment has
+  evolved
+
+#### Example Topics
+* Design a system for a company that just merged with a competitor and must
+  unify two conflicting product catalogs in 6 months
+* Architect a system for a client who insists on "no cloud vendors" for
+  compliance reasons
+* Propose an architecture for a startup that needs to ship fast now but may
+  need to scale 100x in a year
+* Redesign a legacy batch system as event-driven under a hard budget ceiling
+
+#### Deliverables
+* Short written or verbal architecture proposal
+* Explicit list of assumptions made
+* Trade-off rationale (what was optimized for, what was sacrificed)
+* Optional lightweight diagram
+* Retrospective notes comparing this attempt to prior attempts at the same kata
+
+#### In Software Architecture
+Katas build the muscle System Design Challenges don't: handling **ambiguity, constraints, and stakeholder trade-offs** that go beyond raw technical scale — budget, politics, timelines, compliance, team maturity. Where a System Design Challenge asks "can this handle the load?", a Kata asks "given everything messy about this situation, what's the right call, and can you defend it?"
+
 ### Core Difference
 
-| Aspect            | Case Study             | Project               | Laboratory               |
-| ----------------- | ---------------------- | --------------------- | ------------------------ |
-| Primary Goal      | Analyze                | Build                 | Experiment               |
-| Orientation       | Retrospective          | Delivery              | Exploratory              |
-| Main Focus        | Decisions & lessons    | Implementation        | Discovery                |
-| Output            | Insights               | Working system        | Findings / prototype     |
-| Production Ready  | Not required           | Usually yes           | Usually no               |
-| Scale             | Often large systems    | Any scale             | Usually small            |
-| Risk Level        | Observational          | Managed delivery risk | Safe experimentation     |
-| Architecture Role | Trade-offs & evolution | System construction   | Feasibility & validation |
+| Aspect            | Case Study             | Project               | Laboratory               | System Design Challenge       | Architecture Kata               |
+| ----------------- | ---------------------- | --------------------- | ------------------------ | ----------------------------- | ------------------------------- |
+| Primary Goal      | Analyze                | Build                 | Experiment               | Reason about scale            | Decide & defend                 |
+| Orientation       | Retrospective          | Delivery              | Exploratory              | Simulation                    | Practice / rehearsal            |
+| Main Focus        | Decisions & lessons    | Implementation        | Discovery                | Scale, reliability, data flow | Trade-offs under ambiguity      |
+| Output            | Insights               | Working system        | Findings / prototype     | High-level design             | Defensible decision + rationale |
+| Production Ready  | Not required           | Usually yes           | Usually no               | Not applicable (conceptual)   | Not applicable (conceptual)     |
+| Scale             | Often large systems    | Any scale             | Usually small            | Usually large / distributed   | Any — often deliberately messy  |
+| Risk Level        | Observational          | Managed delivery risk | Safe experimentation     | None (simulated)              | None (simulated)                |
+| Time Box          | None                   | Weeks–months          | Days–weeks               | Fixed, short (~1 hr)          | Fixed, short (~1–2 hrs)         |
+| Architecture Role | Trade-offs & evolution | System construction   | Feasibility & validation | Scalability reasoning         | Judgment & communication        |
+
+### Real-World Analogy
+
+| Concept                 | Construction Analogy                               |
+| ----------------------- | -------------------------------------------------- |
+| Laboratory              | Material testing facility                          |
+| Project                 | Building construction                              |
+| Case Study              | Post-construction analysis/report                  |
+| System Design Challenge | Structural blueprint review under a deadline       |
+| Architecture Kata       | Fire drill — rehearsing decisions before it's real |
+
+### In Career Development
+
+| Type                    | Builds                                                                    |
+| ----------------------- | ------------------------------------------------------------------------- |
+| Laboratory              | Curiosity, experimentation, R&D mindset                                   |
+| Project                 | Delivery and engineering execution                                        |
+| Case Study              | Architectural thinking and critical analysis                              |
+| System Design Challenge | Scalability reasoning and structured communication                        |
+| Architecture Kata       | Decisiveness under ambiguity, trade-off articulation, stakeholder empathy |
 
 ---
 
 ### Relationship Between Them
 
-In mature engineering organizations, these often connect.
+In mature engineering organizations, these often connect — and the five don't
+form a single strict sequence so much as a practice loop:
 
 Example flow:
+1. **Architecture Kata**
+   * Practice deciding how you'd architect a notification system under conflicting constraints (budget, compliance, timeline)
+2. **System Design Challenge**
+   * Reason through the same problem focused purely on scale: fan-out, throughput, delivery guarantees
+3. **Laboratory**
+   * Prototype the riskiest part — event-driven delivery with Kafka 
+4. **Project**
+   * Build the production notification system using what the lab validated 
+5. **Case Study**
+   * Analyze the migration outcomes, bottlenecks, failures, and scaling lessons once it's running in production
 
-1. **Laboratory**
-   * Prototype event-driven architecture with Kafka
-
-2. **Project**
-   * Build production notification system using Kafka
-
-3. **Case Study**
-   * Analyze migration outcomes, bottlenecks, failures, and scaling lessons
-
-This is actually how strong engineering cultures evolve.
+Katas and Challenges are cheap and repeatable, so they're often used continuously to sharpen judgment — not just once at the start of this flow.
 
 ---
 
 ### Real-World Analogy
 
-| Concept    | Construction Analogy              |
-| ---------- | --------------------------------- |
-| Laboratory | Material testing facility         |
-| Project    | Building construction             |
-| Case Study | Post-construction analysis/report |
-
----
+| Concept                 | Construction Analogy                               |
+| ----------------------- | -------------------------------------------------- |
+| Laboratory              | Material testing facility                          |
+| Project                 | Building construction                              |
+| Case Study              | Post-construction analysis/report                  |
+| System Design Challenge | Structural blueprint review under a deadline       |
+| Architecture Kata       | Fire drill — rehearsing decisions before it's real |
 
 ### In Career Development
 
 Each develops different competencies.
 
-| Type       | Builds                                       |
-| ---------- | -------------------------------------------- |
-| Laboratory | Curiosity, experimentation, R&D mindset      |
-| Project    | Delivery and engineering execution           |
-| Case Study | Architectural thinking and critical analysis |
+| Type                    | Builds                                                                    |
+| ----------------------- | ------------------------------------------------------------------------- |
+| Laboratory              | Curiosity, experimentation, R&D mindset                                   |
+| Project                 | Delivery and engineering execution                                        |
+| Case Study              | Architectural thinking and critical analysis                              |
+| System Design Challenge | Scalability reasoning and structured communication under time pressure    |
+| Architecture Kata       | Decisiveness under ambiguity, trade-off articulation, stakeholder empathy |
 
-Senior engineers and architects usually need all three.
-
-A strong portfolio might contain:
-
+Senior engineers and architects usually need all five. A strong portfolio might contain:
 * Labs for emerging tech exploration
 * Projects showing delivery capability
 * Case studies showing architectural reasoning and reflection
+* System Design Challenges showing structured scalability thinking under time pressure
+* Architecture Katas showing decisiveness and trade-off communication under ambiguity
